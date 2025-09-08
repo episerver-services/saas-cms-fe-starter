@@ -8,35 +8,28 @@ import { notFound } from 'next/navigation'
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
 
+// Use one default locale for CMS queries in a single-locale site
+const DEFAULT_LOCALE = (process.env.SITE_DEFAULT_LOCALE || 'en').toLowerCase()
+
 /**
  * Renders a Visual Builder draft preview for a single CMS block or component.
- *
- * This route is triggered when previewing isolated components in Optimizely's Visual Builder.
- * It validates the draft mode, fetches the component by its key and version, and renders it.
- *
- * @param props - An async route object containing dynamic route parameters.
- * @param props.params - Route parameters:
- * - `key`: The unique identifier for the CMS component (block GUID or key).
- * - `locale`: The locale for the requested content (e.g. "en").
- * - `version`: The draft version identifier (GUID or version key).
- *
- * @returns A rendered block component in draft preview mode, or `notFound()` if unavailable.
- *
- * @example
- * /draft/7f42.../block/abcd1234 → renders block with key `abcd1234` from version `7f42...`
+ * Triggered when previewing isolated components in Optimizely's Visual Builder.
  */
 export default async function Page({
   params,
 }: {
-  params: Promise<{ key: string; locale: string; version: string }>
+  params: Promise<{ key: string; version: string; locale?: string }>
 }) {
-  const isDraftModeEnabled = await checkDraftMode()
-  if (!isDraftModeEnabled) {
-    return notFound()
-  }
+  if (!(await checkDraftMode())) return notFound()
 
-  const { locale, version, key } = await params
-  const locales = [getValidLocale(locale)]
+  const { version, key, locale } = await params
+  if (!version || !key) return notFound()
+
+  // Tolerate missing / oddly-cased locale for CMS calls (URL remains locale-less)
+  const normalizedLocale = getValidLocale(
+    (locale || DEFAULT_LOCALE).toLowerCase()
+  )
+  const locales = [normalizedLocale]
 
   const response = await optimizely.GetComponentByKey(
     { locales, key, version },
@@ -50,7 +43,8 @@ export default async function Page({
     <>
       <OnPageEdit
         version={version}
-        currentRoute={`/${locale}/draft/${version}/block/${key}`}
+        // Keep the route locale-less in a single-locale app
+        currentRoute={`/draft/${version}/block/${key}`}
       />
       <ContentAreaMapper blocks={[component]} preview />
     </>

@@ -12,27 +12,15 @@ export const dynamic = 'force-dynamic'
 
 type DraftExperienceRouteParams = {
   key: string
-  locale: string
   version: string
+  locale?: string
 }
 
 /**
- * Renders a draft preview page for a Visual Builder Experience.
- *
- * This route handles previewing full Experience layouts created in Visual Builder.
- * It ensures draft mode is active, fetches the requested experience, and renders it
- * using the VisualBuilderExperienceWrapper.
- *
- * @param props - The async route props object.
- * @param props.params - The route parameters:
- *   - `key`: The unique content key of the experience.
- *   - `locale`: The active locale.
- *   - `version`: The preview version of the experience.
- *
- * @returns A full Visual Builder experience page preview, or a 404 if not found.
- *
- * @example
- * /draft/9f8e.../experience/abcd1234 → renders preview of experience `abcd1234`
+ * Draft preview page for a Visual Builder Experience.
+ * – Validates draft mode
+ * – Fetches the experience by key/version
+ * – Normalizes (optional) locale
  */
 export default async function Page({
   params,
@@ -40,12 +28,14 @@ export default async function Page({
   params: Promise<DraftExperienceRouteParams>
 }) {
   const isDraftModeEnabled = await checkDraftMode()
-  if (!isDraftModeEnabled) {
-    return notFound()
-  }
+  if (!isDraftModeEnabled) return notFound()
 
-  const { locale, version, key } = await params
-  const locales = [getValidLocale(locale)]
+  const { key, version, locale } = await params
+  if (!key || !version) return notFound()
+
+  // Be tolerant of missing/odd-cased locale
+  const normalizedLocale = getValidLocale(locale ?? 'en').toLowerCase()
+  const locales = [normalizedLocale]
 
   const experienceData = await optimizely.VisualBuilder(
     { key, version, locales },
@@ -56,15 +46,13 @@ export default async function Page({
     | SafeVisualBuilderExperience
     | undefined
 
-  if (!experience) {
-    return notFound()
-  }
+  if (!experience) return notFound()
 
   return (
     <Suspense fallback={<div>Loading Visual Builder experience...</div>}>
       <OnPageEdit
         version={version}
-        currentRoute={`/${locale}/draft/${version}/experience/${key}`}
+        currentRoute={`/${normalizedLocale}/draft/${version}/experience/${key}`}
       />
       <VisualBuilderExperienceWrapper experience={experience} />
     </Suspense>
