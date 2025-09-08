@@ -10,6 +10,7 @@ import type { NextRequest } from 'next/server'
  *
  * Steps:
  * - Extracts the `url` query parameter from the request.
+ * - Ensures the URL is absolute (NextResponse.redirect requires it).
  * - Enables draft mode using Next.js headers API.
  * - Redirects the user to the specified `url`.
  *
@@ -24,8 +25,11 @@ export async function GET(req: NextRequest) {
     return new NextResponse('Missing URL param', { status: 400 })
   }
 
+  // Ensure absolute URL: relative paths get resolved against request origin
+  const absoluteUrl = new URL(targetUrl, new URL(req.url).origin)
+
   const dm = await draftMode()
   dm.enable()
 
-  return NextResponse.redirect(targetUrl)
+  return NextResponse.redirect(absoluteUrl)
 }
