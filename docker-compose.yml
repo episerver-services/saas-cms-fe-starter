@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  web:
+    image: optimizely-fe:latest
+    container_name: optimizely-fe-app
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - SITE_DOMAIN=localhost:3000
+    env_file:
+      - .env.local
+    restart: unless-stopped

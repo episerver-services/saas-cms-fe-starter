@@ -1,0 +1,12 @@
+# This is a placeholder robots.txt file.
+# Update this before launch with your actual rules.
+
+User-agent: *
+# Disallow all crawling for now
+# Disallow: /
+
+# Allow all crawling (default for PoC)
+Disallow:
+
+# TODO: Add sitemap URL when sitemap.xml is implemented
+# Sitemap: https://your-domain.com/sitemap.xml

@@ -1,0 +1,9 @@
+query AllPages($pageType: [String]) {
+  _Content(where: { _metadata: { types: { in: $pageType } } }) {
+    items {
+      _metadata {
+        ...MetadataFields
+      }
+    }
+  }
+}

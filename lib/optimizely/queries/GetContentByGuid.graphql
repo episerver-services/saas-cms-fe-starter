@@ -1,0 +1,12 @@
+query GetContentByGuid($guid: [String!]) {
+  _Content(where: { _metadata: { key: { in: $guid } } }) {
+    items {
+      _metadata {
+        displayName
+        key
+      }
+      __typename
+      ...ItemsInContentArea
+    }
+  }
+}

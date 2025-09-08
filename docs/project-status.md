@@ -1,0 +1,115 @@
+# 📊 Project Status: SaaS CMS FE Starter
+
+This file tracks the current implementation progress of the custom frontend template for the Optimizely SaaS CMS project.
+
+✅ = Complete  
+🔄 = In Progress  
+🔲 = Not Started  
+❌ = Not in current scope
+
+_Last updated: 02 September 2025_
+
+---
+
+## 🧱 Phase 1: Project Setup & Infrastructure
+
+| Task                                 | Status | Notes                                              |
+| ------------------------------------ | ------ | -------------------------------------------------- |
+| **Project scaffold & folder layout** | ✅     | App Router, `/app`, `/lib`, etc. all in place      |
+| **Environment config (.env setup)**  | 🔄     | `.env.local` expected by codegen + Docker          |
+| **.env.example** template            | ✅     | Sample env file included with all variables        |
+| **TypeScript + ESLint config**       | ✅     | `tsconfig.json`, `eslint.config.ts` are valid      |
+| **GitHub CI/CD pipelines**           | ✅     | `ci-cd.yaml` handles lint, build, test via Actions |
+| **Commit linting / Husky hooks**     | ✅     | `.husky/pre-commit` present with `lint-staged`     |
+
+---
+
+## 📦 Phase 2: CMS Integration (Headless Foundation)
+
+| Task                               | Status | Notes                                                        |
+| ---------------------------------- | ------ | ------------------------------------------------------------ |
+| GraphQL API connection             | 🔲     | Optimizely CMS disconnected — integration pending            |
+| SDK setup with graphql-codegen     | 🔲     | graphql-codegen removed; no generated SDK in use             |
+| Content ID config (home, layout)   | 🔲     | CMS-driven layout/homepage config removed                    |
+| Preview mode support (draft route) | ✅     | Draft mode routes implemented and functioning with mock data |
+| Mock preview route (`/draft/...`)  | ✅     | Supports local dev without CMS connection                    |
+| Fallback & error handling          | ✅     | `not-found.tsx` still handles unresolved routes cleanly      |
+
+---
+
+## 🧱 Phase 3: Core Rendering Logic
+
+| Task                                 | Status | Notes                                                                 |
+| ------------------------------------ | ------ | --------------------------------------------------------------------- |
+| Page routing (`[[...slug]]`)         | ✅     | Catch-all route parses locale internally; supports ISR + preview mode |
+| Catch-all content renderer           | ✅     | Content renderer stripped back; fallback logic implemented            |
+| Component factory mapper             | ✅     | Draft/published page rendering active with Suspense + error fallback  |
+| Slot renderer for named areas        | ✅     | Block-to-component mapping via `ContentAreaMapper`                    |
+| ID resolution (inline/shared blocks) | 🔲     | No Visual Builder or GraphQL runtime guards present                   |
+| Rich text and media component base   | 🔄     | Placeholder and Storybook setup added; CMS-driven components missing  |
+
+---
+
+## 🌐 Phase 4: Performance & Delivery
+
+| Task                             | Status | Notes                                                                              |
+| -------------------------------- | ------ | ---------------------------------------------------------------------------------- |
+| Rendering model enforcement      | ✅     | ISR is enabled via `revalidate = 60`; fallback logic active for preview            |
+| CDN-based image transformation   | 🔄     | Next.js image config present, but image usage minimal; CDN optimisation unverified |
+| Core Web Vitals setup (LCP, INP) | 🔄     | `web-vitals` installed; `VitalsInit` placeholder exists, but is unused             |
+| Real-user monitoring/analytics   | ❌     | No RUM or analytics tooling (Sentry, GA4, LogRocket, etc.) configured              |
+
+---
+
+## 🛡️ Phase 5: Accessibility, SEO & Metadata
+
+| Task                       | Status | Notes                                                               |
+| -------------------------- | ------ | ------------------------------------------------------------------- |
+| Metadata from CMS          | 🔄     | Metadata scaffolding present; CMS integration pending               |
+| Accessibility baseline     | 🔄     | Placeholder structure OK; skip links in place; no WCAG audit yet    |
+| Skip links, ARIA audit     | ✅     | Skip link implemented in `layout.tsx`; other checks not yet applied |
+| robots.txt / sitemap setup | ✅     | Sitemap and `robots.txt` routes added; static only for now          |
+
+---
+
+## 🧪 Phase 6: Unit & E2E Test Frameworks
+
+| Task                            | Status | Notes                                                                       |
+| ------------------------------- | ------ | --------------------------------------------------------------------------- |
+| Jest unit test setup            | ✅     | Jest + RTL config present; minimal test coverage so far                     |
+| RTL + jest-dom assertions       | ✅     | Matchers like `toBeInTheDocument` available via `@testing-library/jest-dom` |
+| Component unit test coverage    | 🔄     | Starter tests in place (e.g. `ContentAreaMapper`); most components untested |
+| E2E/Browsers tests (optional)   | ✅     | Playwright installed; simple baseline test included                         |
+| BDD tests (Cucumber) (optional) | ✅     | BDD configured with `@cucumber/cucumber`; working `.feature` test present   |
+
+---
+
+## 🧱 Phase 7: Visual Builder
+
+| Task                                 | Status | Notes                                                                |
+| ------------------------------------ | ------ | -------------------------------------------------------------------- |
+| Visual Builder support planned       | ✅     | VB now in scope — core infrastructure and preview mode supported     |
+| Experience content query (GraphQL)   | ✅     | `_Experience` and preview mode supported via VisualBuilder route     |
+| Visual block component compatibility | 🔄     | Component mapping in progress; partial support for dynamic rendering |
+| Layout awareness and slot mapping    | 🔄     | Layout-aware rendering started; slot renderer partially implemented  |
+| Safe guards for Experience types     | ✅     | `SafeVisualBuilderExperience` types and guards fully implemented     |
+
+---
+
+## 📁 Phase 8: Docs & Developer Experience
+
+| Task                    | Status | Notes                                              |
+| ----------------------- | ------ | -------------------------------------------------- |
+| Markdown documentation  | ✅     | All internal guides in `/docs` or README           |
+| Code comments + JSDoc   | ✅     | Function-level JSDoc added throughout key files    |
+| Dev commands (scripts)  | ✅     | Clean, test, build, preview all covered via `pnpm` |
+| DX setup (editorconfig) | ✅     | Formatting and linting enforced across team setups |
+
+---
+
+## 🍪 Phase 9: Compliance (Cookies & Consent)
+
+| Task                               | Status | Notes                                                                 |
+| ---------------------------------- | ------ | --------------------------------------------------------------------- |
+| Cookie consent framework           | ❌     | Requested by client; will require third-party account and integration |
+| CMP implementation (Optanon, etc.) | ❌     | Next team will choose and implement provider                          |
