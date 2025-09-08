@@ -139,6 +139,9 @@ devDependencies:
   '@types/react-dom':
     specifier: ^19
     version: 19.1.6(@types/react@19.1.8)
+  '@types/react-test-renderer':
+    specifier: ^19.1.0
+    version: 19.1.0
   '@vitest/browser':
     specifier: ^3.2.4
     version: 3.2.4(playwright@1.54.1)(vite@7.0.6)(vitest@3.2.4)
@@ -202,6 +205,9 @@ devDependencies:
   prettier:
     specifier: ^3.5.3
     version: 3.6.2
+  react-test-renderer:
+    specifier: 19.1.0
+    version: 19.1.0(react@19.1.0)
   start-server-and-test:
     specifier: ^2.0.12
     version: 2.0.12
@@ -4441,6 +4447,12 @@ packages:
       '@types/react': ^19.0.0
     dependencies:
       '@types/react': 19.1.8
+
+  /@types/react-test-renderer@19.1.0:
+    resolution: {integrity: sha512-XD0WZrHqjNrxA/MaR9O22w/RNidWR9YZmBdRGI7wcnWGrv/3dA8wKCJ8m63Sn+tLJhcjmuhOi629N66W6kgWzQ==}
+    dependencies:
+      '@types/react': 19.1.8
+    dev: true
 
   /@types/react@19.1.8:
     resolution: {integrity: sha512-AwAfQ2Wa5bCx9WP8nZL2uMZWod7J7/JSplxbTmBQ5ms6QpqNYm672H0Vu9ZVKVngQ+ii4R/byguVEUZQyeg44g==}
@@ -10228,6 +10240,10 @@ packages:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
     dev: true
 
+  /react-is@19.1.1:
+    resolution: {integrity: sha512-tr41fA15Vn8p4X9ntI+yCyeGSf1TlYaY5vlTZfQmeLBrFo3psOPX6HhTDnFNL9uj3EhP0KAQ80cugCl4b4BERA==}
+    dev: true
+
   /react-remove-scroll-bar@2.3.8(@types/react@19.1.8)(react@19.1.0):
     resolution: {integrity: sha512-9r+yi9+mgU33AKcj6IbT9oRCO78WriSj6t/cF8DWBZJ9aOGPOTEDvdUDz1FwKim7QXWwmHqtdHnRJfhAxEG46Q==}
     engines: {node: '>=10'}
@@ -10278,6 +10294,16 @@ packages:
       react: 19.1.0
       tslib: 2.8.1
     dev: false
+
+  /react-test-renderer@19.1.0(react@19.1.0):
+    resolution: {integrity: sha512-jXkSl3CpvPYEF+p/eGDLB4sPoDX8pKkYvRl9+rR8HxLY0X04vW7hCm1/0zHoUSjPZ3bDa+wXWNTDVIw/R8aDVw==}
+    peerDependencies:
+      react: ^19.1.0
+    dependencies:
+      react: 19.1.0
+      react-is: 19.1.1
+      scheduler: 0.26.0
+    dev: true
 
   /react@19.1.0:
     resolution: {integrity: sha512-FS+XFBNvn3GTAWq26joslQgWNoFu08F4kl0J4CgdNKADkdSGXQyTCnKteIAJy96Br6YbpEU1LSzV5dYtjMkMDg==}

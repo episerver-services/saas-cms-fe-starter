@@ -1,35 +1,35 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import CTAButton from '@/app/components/ui/cta-button'
 
 /**
  * UI component for displaying draft-only page actions.
  *
- * This component renders within `/draft/` routes when `NEXT_PUBLIC_MOCK_OPTIMIZELY` is set to `'true'`,
- * allowing editors to refresh content or exit draft mode. It will not render in published routes,
- * and auto-hides in production or non-mock environments.
+ * Renders within `/draft/` routes when `NEXT_PUBLIC_MOCK_OPTIMIZELY` is `'true'`,
+ * allowing editors to refresh content or exit draft mode.
  *
  * Buttons:
  * - "Refresh Page": Re-fetches updated CMS draft content.
  * - "Disable Draft": Calls `/api/draft/disable` to exit Next.js draft mode.
  *
- * @returns A floating button group for draft preview pages, or null if not eligible.
- *
- * @example
- * <DraftActions />
+ * To ease testing, consumers may pass `pathname` explicitly; otherwise we read it
+ * from Next's `usePathname()` hook.
  */
-const DraftActions = () => {
-  const router = useRouter()
-  const pathname = usePathname()
-  const [showActions, setShowActions] = useState(false)
+type DraftActionsProps = {
+  /** Optional pathname override (mainly for tests). If omitted, uses usePathname(). */
+  pathname?: string | null
+}
 
-  useEffect(() => {
-    const isMock = process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY === 'true'
-    const isDraftRoute = pathname?.startsWith('/draft/')
-    setShowActions(isMock && isDraftRoute)
-  }, [pathname])
+const DraftActions = ({ pathname: injectedPathname }: DraftActionsProps) => {
+  const router = useRouter()
+  // ✅ Call the hook unconditionally, then choose the value
+  const hookPathname = usePathname()
+  const pathname = injectedPathname ?? hookPathname
+
+  const isMock = process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY === 'true'
+  const isDraftRoute = !!pathname && pathname.startsWith('/draft/')
+  const showActions = isMock && isDraftRoute
 
   if (!showActions) return null
 
@@ -43,6 +43,7 @@ const DraftActions = () => {
             await fetch('/api/draft/disable')
             router.refresh()
           } catch (err) {
+            // Swallow to avoid breaking editor flow
             console.error('Failed to disable draft mode:', err)
           }
         }}
