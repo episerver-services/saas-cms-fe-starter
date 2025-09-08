@@ -28,11 +28,12 @@ export const metadata: Metadata = {
     url: SITE_DOMAIN,
     siteName: 'My Site',
     locale: 'en_US',
-    type: 'website',
+    // Note: `type` intentionally omitted for type safety
   },
   twitter: {
-    card: 'summary_large_image',
     title: FALLBACK_TITLE,
     description: FALLBACK_DESCRIPTION,
+    // Note: `card` intentionally omitted, rely on images for card type inference
+    images: [`${SITE_DOMAIN}/og-image.jpg`],
   },
 }
