@@ -1,70 +1,62 @@
+// app/sitemap/route.ts (or wherever your route lives)
 import { optimizely } from '@/lib/optimizely/fetch'
 import { mapPathWithoutLocale } from '@/lib/optimizely/utils/language'
 
 /**
  * Generates an XML sitemap for public CMS and Experience pages.
  *
- * This route returns a valid `sitemap.xml` response using the `AllPages` query
- * to fetch published content URLs from Optimizely CMS.
- *
- * It filters only relevant page types (`CMSPage` and `SEOExperience`),
- * strips locale prefixes, and outputs well-formed XML for search engines.
- *
- * @returns A `Response` object with XML body and appropriate `Content-Type`.
- *
- * @example XML Output
- * ```xml
- * <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
- *   <url>
- *     <loc>https://yourdomain.com/about</loc>
- *   </url>
- * </urlset>
- * ```
+ * Fetches published URLs from Optimizely, strips locale prefixes,
+ * deduplicates/sorts paths, and returns a valid sitemap XML.
  */
 export async function GET() {
-  const pageTypes = ['CMSPage', 'SEOExperience']
+  const siteDomain = process.env.SITE_DOMAIN || ''
+  if (!siteDomain) {
+    // Config error — fail loudly so it’s obvious in CI
+    const xml = `<?xml version="1.0" encoding="UTF-8"?><error>Missing SITE_DOMAIN</error>`
+    return new Response(xml, {
+      status: 500,
+      headers: { 'Content-Type': 'application/xml' },
+    })
+  }
+
+  const pageTypes = ['CMSPage', 'SEOExperience'] as const
   let paths: string[] = []
 
   try {
-    const data = await optimizely.AllPages({ pageType: pageTypes })
-    const items = data._Content?.items || []
+    const data = await optimizely.AllPages({ pageType: pageTypes as any })
+    const items = data._Content?.items ?? []
 
     paths = items
-      .map((item) => {
-        const metadata = item?._metadata
-
-        if (
-          metadata &&
-          typeof metadata === 'object' &&
-          'url' in metadata &&
-          typeof metadata.url?.default === 'string'
-        ) {
-          return mapPathWithoutLocale(metadata.url.default)
-        }
-
-        return null
-      })
-      .filter((path): path is string => path !== null)
-      .map(mapPathWithoutLocale)
-  } catch (e) {
-    console.error('Sitemap fetch error:', e)
+      .map((item: any) => item?._metadata?.url?.default as unknown)
+      .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+      .map((p) => ensureLeadingSlash(mapPathWithoutLocale(p)))
+  } catch {
+    // If the CMS is down, still return a valid (empty) sitemap.
+    paths = []
   }
 
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${paths
-  .map(
-    (path) => `
-  <url>
-    <loc>${process.env.SITE_DOMAIN}${path}</loc>
-  </url>`
-  )
-  .join('\n')}
-</urlset>`
+  const uniqueSorted = Array.from(new Set(paths)).sort()
+  const xml = buildSitemapXml(uniqueSorted, stripTrailingSlash(siteDomain))
 
-  return new Response(sitemap, {
-    headers: {
-      'Content-Type': 'application/xml',
-    },
+  return new Response(xml, {
+    headers: { 'Content-Type': 'application/xml' },
   })
+}
+
+function ensureLeadingSlash(path: string): string {
+  return path.startsWith('/') ? path : `/${path}`
+}
+
+function stripTrailingSlash(url: string): string {
+  return url.endsWith('/') ? url.slice(0, -1) : url
+}
+
+function buildSitemapXml(paths: string[], domain: string): string {
+  const urls = paths
+    .map((p) => `  <url>\n    <loc>${domain}${p}</loc>\n  </url>`)
+    .join('\n')
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>`
 }
