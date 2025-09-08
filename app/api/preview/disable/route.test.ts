@@ -1,3 +1,5 @@
+/** @jest-environment node */
+
 import { GET } from './route'
 
 // Mock next/headers.draftMode

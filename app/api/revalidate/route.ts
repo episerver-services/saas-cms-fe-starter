@@ -1,22 +1,28 @@
 import { optimizely } from '@/lib/optimizely/fetch'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { type NextRequest, NextResponse } from 'next/server'
-
-const OPTIMIZELY_REVALIDATE_SECRET = process.env.OPTIMIZELY_REVALIDATE_SECRET
+import crypto from 'node:crypto'
 
 /**
  * Handles Optimizely webhook POST requests for content publishing.
- * Validates the webhook, resolves the content by GUID, determines its URL,
- * and triggers revalidation for the corresponding Next.js page or cache tag.
+ * Validates the webhook (HMAC header if provided, otherwise query secret),
+ * resolves the content by GUID, determines its URL, and triggers revalidation
+ * for the corresponding Next.js page or cache tag.
  *
  * @param request - The incoming webhook POST request.
  * @returns A JSON response indicating success or failure.
  */
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export async function POST(
+  request: NextRequest | Request
+): Promise<NextResponse> {
   try {
+    // If a signature header is present (and a shared key is configured), verify it.
+    await verifySignatureIfPresent(request)
+
+    // Fallback/legacy query secret check (kept for compatibility).
     validateWebhookSecret(request)
 
-    const docId = await extractDocId(request)
+    const docId = await extractDocIdSafe(request)
     if (!docId || !docId.includes('Published')) {
       return NextResponse.json({ message: 'No action taken' })
     }
@@ -50,29 +56,60 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 }
 
+/* ------------------------- Auth & Parsing Helpers ------------------------- */
+
+/**
+ * If the request includes an HMAC signature header and a shared secret is set,
+ * verify the signature. Otherwise no-op (falls back to query secret).
+ *
+ * Uses header: `x-optimizely-signature` (hex), algo: HMAC-SHA256.
+ */
+async function verifySignatureIfPresent(request: Request | NextRequest) {
+  const signature = request.headers.get('x-optimizely-signature')
+  const key = process.env.OPTIMIZELY_WEBHOOK_SECRET
+  if (!signature || !key) return
+
+  const body = await request.clone().text()
+  const expected = crypto.createHmac('sha256', key).update(body).digest('hex')
+
+  // Constant-time compare
+  const a = Buffer.from(signature, 'hex')
+  const b = Buffer.from(expected, 'hex')
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    throw new Error('Invalid signature')
+  }
+}
+
 /**
  * Validates the Optimizely webhook secret in the request query string.
  * Throws an error if the secret is missing or invalid.
  *
- * @param request - Incoming webhook request.
+ * Works with both NextRequest and the standard Request used in tests.
  */
-function validateWebhookSecret(request: NextRequest): void {
-  const webhookSecret = request.nextUrl.searchParams.get('cg_webhook_secret')
-  if (webhookSecret !== OPTIMIZELY_REVALIDATE_SECRET) {
+function validateWebhookSecret(request: NextRequest | Request): void {
+  const secret = new URL(request.url).searchParams.get('cg_webhook_secret')
+  const expected = process.env.OPTIMIZELY_REVALIDATE_SECRET
+  if (secret !== expected) {
     throw new Error('Invalid credentials')
   }
 }
 
 /**
- * Extracts the document ID from the webhook request JSON body.
- *
- * @param request - Incoming webhook request.
- * @returns The document ID (e.g., "guid_locale_Published").
+ * Safely parses JSON and extracts a string docId, or ''.
+ * Converts bad JSON into a clean 400 response via the error mapper.
  */
-async function extractDocId(request: NextRequest): Promise<string> {
-  const requestJson = await request.json()
-  return requestJson?.data?.docId || ''
+async function extractDocIdSafe(req: Request | NextRequest): Promise<string> {
+  let json: unknown
+  try {
+    json = await req.json()
+  } catch {
+    throw new Error('Bad JSON')
+  }
+  const docId = (json as any)?.data?.docId
+  return typeof docId === 'string' ? docId : ''
 }
+
+/* --------------------------- CMS Interaction ----------------------------- */
 
 /**
  * Fetches Optimizely content by GUID.
@@ -89,6 +126,8 @@ async function fetchContentByGuid(guid: string): Promise<any> {
   }
   return item
 }
+
+/* ----------------------------- URL Utilities ----------------------------- */
 
 /**
  * Ensures the URL is locale-prefixed and cleaned of trailing slashes.
@@ -109,21 +148,20 @@ function normalizeUrl(url: string, locale: string): string {
 
 /**
  * Revalidates either a cache tag or a specific page path.
- *
- * @param urlWithLocale - The normalized URL to revalidate.
+ * Uses exact path segment matching for "header" and "footer" tags.
  */
 async function handleRevalidation(urlWithLocale: string): Promise<void> {
-  if (urlWithLocale.includes('footer')) {
-    console.log(`Revalidating tag: optimizely-footer`)
+  const segs = urlWithLocale.split('/').filter(Boolean)
+  if (segs.includes('footer')) {
     await revalidateTag('optimizely-footer')
-  } else if (urlWithLocale.includes('header')) {
-    console.log(`Revalidating tag: optimizely-header`)
+  } else if (segs.includes('header')) {
     await revalidateTag('optimizely-header')
   } else {
-    console.log(`Revalidating path: ${urlWithLocale}`)
     await revalidatePath(urlWithLocale)
   }
 }
+
+/* -------------------------------- Errors --------------------------------- */
 
 /**
  * Handles and formats errors into a JSON response.
@@ -132,12 +170,26 @@ async function handleRevalidation(urlWithLocale: string): Promise<void> {
  * @returns A formatted JSON response with error status.
  */
 function handleError(error: unknown): NextResponse {
-  console.error('Error processing webhook:', error)
   if (error instanceof Error) {
     if (error.message === 'Invalid credentials') {
       return NextResponse.json(
         { message: 'Invalid credentials' },
         { status: 401 }
+      )
+    }
+    if (error.message === 'Invalid signature') {
+      return NextResponse.json(
+        { message: 'Invalid signature' },
+        { status: 401 }
+      )
+    }
+    if (error.message === 'Bad JSON') {
+      return NextResponse.json({ message: 'Bad JSON' }, { status: 400 })
+    }
+    if (error.message === 'Content not found') {
+      return NextResponse.json(
+        { message: 'Content not found' },
+        { status: 500 }
       )
     }
     return NextResponse.json({ message: error.message }, { status: 500 })
@@ -150,9 +202,6 @@ function handleError(error: unknown): NextResponse {
 
 /**
  * Type guard to check if the given metadata includes a `url` field.
- *
- * @param metadata - The metadata object to check.
- * @returns True if metadata contains a `url` field of the expected shape.
  */
 function hasUrlMetadata(metadata: unknown): metadata is {
   url: {
