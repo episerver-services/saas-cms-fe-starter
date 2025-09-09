@@ -10,6 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
+    "test:ui": "jest --selectProjects jsdom-ui",
+    "test:api": "jest --selectProjects node-routes",
     "bdd": "cucumber-js --require-module ts-node/register --require features/step-definitions/**/*.ts",
     "test:features": "cucumber-js features/**/*.feature --require-module ts-node/register --require features/step-definitions/**/*.ts --require features/support/**/*.ts",
     "test:bdd": "start-server-and-test dev http://localhost:3000 bdd",
