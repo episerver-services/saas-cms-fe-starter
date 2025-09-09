@@ -122,6 +122,20 @@ Run **unit tests** with Jest:
 pnpm test
 ```
 
+Unit test coverage includes:
+
+- `lib/image/*` (Cloudinary, CDN, Next.js image loaders)  
+- `lib/optimizely/fetch.ts` (GraphQL requester + error handling)  
+- `lib/utils/*` (factories, draft mode, metadata, language, inline block resolution, type guards, misc helpers)  
+- `app/components/draft/*` (Draft mode homepage, actions, CMS page, on-page-edit)  
+- `app/components/visual-builder/*` (wrapper for layout-aware rendering)
+
+Run **BDD tests** with Cucumber:
+
+```bash
+pnpm test:bdd
+```
+
 Run **Playwright E2E** tests:
 
 ```bash

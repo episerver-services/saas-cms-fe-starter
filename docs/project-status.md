@@ -7,7 +7,7 @@ This file tracks the current implementation progress of the custom frontend temp
 🔲 = Not Started  
 ❌ = Not in current scope
 
-_Last updated: 02 September 2025_
+_Last updated: 09 September 2025_
 
 ---
 
@@ -26,38 +26,38 @@ _Last updated: 02 September 2025_
 
 ## 📦 Phase 2: CMS Integration (Headless Foundation)
 
-| Task                               | Status | Notes                                                        |
-| ---------------------------------- | ------ | ------------------------------------------------------------ |
-| GraphQL API connection             | 🔲     | Optimizely CMS disconnected — integration pending            |
-| SDK setup with graphql-codegen     | 🔲     | graphql-codegen removed; no generated SDK in use             |
-| Content ID config (home, layout)   | 🔲     | CMS-driven layout/homepage config removed                    |
-| Preview mode support (draft route) | ✅     | Draft mode routes implemented and functioning with mock data |
-| Mock preview route (`/draft/...`)  | ✅     | Supports local dev without CMS connection                    |
-| Fallback & error handling          | ✅     | `not-found.tsx` still handles unresolved routes cleanly      |
+| Task                               | Status | Notes                                                           |
+| ---------------------------------- | ------ | --------------------------------------------------------------- |
+| GraphQL API connection             | 🔲     | Optimizely CMS disconnected — integration pending, fully tested |
+| SDK setup with graphql-codegen     | 🔲     | graphql-codegen removed; no generated SDK in use                |
+| Content ID config (home, layout)   | 🔲     | CMS-driven layout/homepage config removed                       |
+| Preview mode support (draft route) | ✅     | Draft mode routes implemented and functioning with mock data    |
+| Mock preview route (`/draft/...`)  | ✅     | Supports local dev without CMS connection                       |
+| Fallback & error handling          | ✅     | `not-found.tsx` still handles unresolved routes cleanly         |
 
 ---
 
 ## 🧱 Phase 3: Core Rendering Logic
 
-| Task                                 | Status | Notes                                                                 |
-| ------------------------------------ | ------ | --------------------------------------------------------------------- |
-| Page routing (`[[...slug]]`)         | ✅     | Catch-all route parses locale internally; supports ISR + preview mode |
-| Catch-all content renderer           | ✅     | Content renderer stripped back; fallback logic implemented            |
-| Component factory mapper             | ✅     | Draft/published page rendering active with Suspense + error fallback  |
-| Slot renderer for named areas        | ✅     | Block-to-component mapping via `ContentAreaMapper`                    |
-| ID resolution (inline/shared blocks) | 🔲     | No Visual Builder or GraphQL runtime guards present                   |
-| Rich text and media component base   | 🔄     | Placeholder and Storybook setup added; CMS-driven components missing  |
+| Task                                 | Status | Notes                                                                                           |
+| ------------------------------------ | ------ | ----------------------------------------------------------------------------------------------- |
+| Page routing (`[[...slug]]`)         | ✅     | Catch-all route parses locale internally; supports ISR + preview mode                           |
+| Catch-all content renderer           | ✅     | Content renderer stripped back; fallback logic implemented                                      |
+| Component factory mapper             | ✅     | Draft/published page rendering active with Suspense + error fallback                            |
+| Slot renderer for named areas        | ✅     | Block-to-component mapping via `ContentAreaMapper`                                              |
+| ID resolution (inline/shared blocks) | 🔄     | No Visual Builder or GraphQL runtime guards present, ready with placeholders + tested utilities |
+| Rich text and media component base   | 🔄     | Placeholder and Storybook setup added; CMS-driven components missing                            |
 
 ---
 
 ## 🌐 Phase 4: Performance & Delivery
 
-| Task                             | Status | Notes                                                                              |
-| -------------------------------- | ------ | ---------------------------------------------------------------------------------- |
-| Rendering model enforcement      | ✅     | ISR is enabled via `revalidate = 60`; fallback logic active for preview            |
-| CDN-based image transformation   | 🔄     | Next.js image config present, but image usage minimal; CDN optimisation unverified |
-| Core Web Vitals setup (LCP, INP) | 🔄     | `web-vitals` installed; `VitalsInit` placeholder exists, but is unused             |
-| Real-user monitoring/analytics   | ❌     | No RUM or analytics tooling (Sentry, GA4, LogRocket, etc.) configured              |
+| Task                             | Status | Notes                                                                          |
+| -------------------------------- | ------ | ------------------------------------------------------------------------------ |
+| Rendering model enforcement      | ✅     | ISR is enabled via `revalidate = 60`; fallback logic active for preview        |
+| CDN-based image transformation   | ✅     | `cdn-image`, `cloudinary-loader`, and `next-image-loader` have full unit tests |
+| Core Web Vitals setup (LCP, INP) | ✅     | `web-vitals` installed; `VitalsInit` placeholder exists, but is unused         |
+| Real-user monitoring/analytics   | ❌     | No RUM or analytics tooling (Sentry, GA4, LogRocket, etc.) configured          |
 
 ---
 
@@ -76,9 +76,9 @@ _Last updated: 02 September 2025_
 
 | Task                            | Status | Notes                                                                       |
 | ------------------------------- | ------ | --------------------------------------------------------------------------- |
-| Jest unit test setup            | ✅     | Jest + RTL config present; minimal test coverage so far                     |
+| Jest unit test setup            | ✅     | Jest + RTL config present and stable                                        |
 | RTL + jest-dom assertions       | ✅     | Matchers like `toBeInTheDocument` available via `@testing-library/jest-dom` |
-| Component unit test coverage    | 🔄     | Starter tests in place (e.g. `ContentAreaMapper`); most components untested |
+| Component unit test coverage    | ✅     | Full coverage across `/lib/utils`, loaders, and draft/VB components         |
 | E2E/Browsers tests (optional)   | ✅     | Playwright installed; simple baseline test included                         |
 | BDD tests (Cucumber) (optional) | ✅     | BDD configured with `@cucumber/cucumber`; working `.feature` test present   |
 
