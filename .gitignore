@@ -9,6 +9,10 @@ dist/
 # Testing
 coverage/
 
+# Playwright outputs
+playwright-report/
+test-results/
+
 # Tooling
 .turbo/
 .vercel/

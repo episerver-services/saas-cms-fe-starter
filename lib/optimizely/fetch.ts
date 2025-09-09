@@ -19,6 +19,17 @@ interface GraphqlResponse<Response> {
   data: Response
 }
 
+/** Safely read Next.js draft mode without requiring a request context. */
+async function safeDraftEnabled(): Promise<boolean> {
+  try {
+    const { isEnabled } = await draftMode()
+    return !!isEnabled
+  } catch {
+    // Outside a request scope (build, preboot, playwright webServer, etc.)
+    return false
+  }
+}
+
 /**
  * Fetches GraphQL data from Optimizely or returns mock data when enabled.
  *
@@ -95,7 +106,7 @@ export const optimizelyFetch = async <Response, Variables = object>({
         ...configHeaders,
       },
       body: JSON.stringify({
-        query, // ✅ use directly
+        query,
         ...(variables && { variables }),
       }),
       cache,
@@ -121,12 +132,11 @@ const requester = async <T, V>(
   variables: V,
   options: OptimizelyFetchOptions = {}
 ): Promise<T> => {
-  const { isEnabled } = await draftMode()
-  const isPreview = options.preview ?? isEnabled
+  const isPreview = options.preview ?? (await safeDraftEnabled())
 
   return (
     await optimizelyFetch<T, V>({
-      query, // ✅ no need to stringify or print
+      query,
       variables,
       ...options,
       preview: isPreview,
@@ -143,9 +153,7 @@ const requester = async <T, V>(
  * Replace or extend these queries manually until GraphQL Codegen is restored.
  */
 export const optimizely = {
-  /**
-   * Retrieves the StartPage content in preview mode.
-   */
+  /** Retrieves the StartPage content in preview mode. */
   async GetPreviewStartPage(variables: { locales: string[]; version: string }) {
     return requester<
       {
@@ -164,9 +172,7 @@ export const optimizely = {
     })
   },
 
-  /**
-   * Retrieves a single CMS block component by key (Visual Builder preview).
-   */
+  /** Retrieves a single CMS block component by key (Visual Builder preview). */
   async GetComponentByKey(
     variables: { locales: string[]; key: string; version: string },
     options?: { preview?: boolean }
@@ -184,9 +190,7 @@ export const optimizely = {
     >('query GetComponentByKey { ... }', variables, options)
   },
 
-  /**
-   * Retrieves a full-page Experience layout by key (Visual Builder).
-   */
+  /** Retrieves a full-page Experience layout by key (Visual Builder). */
   async VisualBuilder(
     variables: { key: string; version: string; locales: string[] },
     options?: { preview?: boolean }
@@ -214,9 +218,7 @@ export const optimizely = {
     >('query VisualBuilder { ... }', variables, options)
   },
 
-  /**
-   * Stub for fetching CMS pages by URL slug (mock-only).
-   */
+  /** Stub for fetching CMS pages by URL slug (mock-only). */
   async getPageByURL(
     variables: { locales: string[]; slug: string },
     options?: { preview?: boolean }
@@ -231,9 +233,7 @@ export const optimizely = {
     }
   },
 
-  /**
-   * Retrieves all CMS pages for static param generation (e.g. ISR).
-   */
+  /** Retrieves all CMS pages for static param generation (e.g. ISR). */
   async AllPages(variables: { pageType: string[] }) {
     return requester<
       {
@@ -251,9 +251,7 @@ export const optimizely = {
     >('query AllPages { ... }', variables)
   },
 
-  /**
-   * Retrieves content by GUID (used in revalidate route).
-   */
+  /** Retrieves content by GUID (used in revalidate route). */
   async GetContentByGuid(variables: { guid: string }) {
     return requester<
       {
@@ -272,9 +270,7 @@ export const optimizely = {
     >('query GetContentByGuid { ... }', variables)
   },
 
-  /**
-   * Retrieves CMSPage by slug and version (used in Visual Builder preview fallback).
-   */
+  /** Retrieves CMSPage by slug and version (used in Visual Builder preview fallback). */
   async GetAllPagesVersionByURL(
     variables: { locales: string[]; slug: string },
     options?: { preview?: boolean }
@@ -303,9 +299,7 @@ export const optimizely = {
     >('query GetAllPagesVersionByURL { ... }', variables, options)
   },
 
-  /**
-   * Retrieves all versions of a Visual Builder Experience by slug.
-   */
+  /** Retrieves all versions of a Visual Builder Experience by slug. */
   async GetAllVisualBuilderVersionsBySlug(
     variables: { locales: string[]; slug: string },
     options?: { preview?: boolean }
@@ -337,9 +331,7 @@ export const optimizely = {
     >('query GetAllVisualBuilderVersionsBySlug { ... }', variables, options)
   },
 
-  /**
-   * Retrieves all versions of the StartPage content (used in preview mode).
-   */
+  /** Retrieves all versions of the StartPage content (used in preview mode). */
   async GetAllStartPageVersions(
     variables: { locales: string[] },
     options?: { preview?: boolean }
