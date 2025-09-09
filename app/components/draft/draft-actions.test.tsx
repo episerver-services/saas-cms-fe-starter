@@ -1,5 +1,3 @@
-/** @jest-environment node */
-
 import DraftActions from './draft-actions'
 import CTAButton from '@/app/components/ui/cta-button'
 

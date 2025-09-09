@@ -1,5 +1,3 @@
-/** @jest-environment node */
-
 import { GET } from './route'
 
 // 1) Mock the module WITHOUT referencing enableMock yet

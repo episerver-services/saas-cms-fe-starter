@@ -1,5 +1,3 @@
-/** @jest-environment node */
-
 // --- Hoisted-safe mocks ---
 
 jest.mock('@/app/components/draft/on-page-edit', () => {

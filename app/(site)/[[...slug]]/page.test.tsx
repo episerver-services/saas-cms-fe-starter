@@ -1,5 +1,3 @@
-/** @jest-environment node */
-
 // --- Hoisted-safe module mocks ---
 jest.mock('@/app/components/content-area/mapper', () => {
   const Comp = (props: any) => ({ type: 'mapper-stub', props })

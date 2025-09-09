@@ -1,5 +1,3 @@
-/** @jest-environment node */
-
 jest.mock('../content-area/mapper', () => {
   // mock as a function component; when NOT rendering, .type will be this function
   const Comp = (props: any) => ({ type: 'mapper-stub', props })

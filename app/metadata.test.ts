@@ -1,5 +1,3 @@
-/** @jest-environment node */
-
 const ORIGINAL_ENV = { ...process.env }
 
 afterEach(() => {

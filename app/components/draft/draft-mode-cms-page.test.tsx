@@ -1,5 +1,3 @@
-/** @jest-environment node */
-
 jest.mock('@/lib/optimizely/fetch', () => ({
   optimizely: {
     GetAllPagesVersionByURL: jest.fn(),

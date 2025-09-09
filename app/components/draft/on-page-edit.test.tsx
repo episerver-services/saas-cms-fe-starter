@@ -1,7 +1,4 @@
-/** @jest-environment jsdom */
-
-import React from 'react'
-import { act } from 'react-dom/test-utils'
+import React, { act } from 'react'
 import { createRoot, Root } from 'react-dom/client'
 
 const mockPush = jest.fn()
@@ -20,19 +17,21 @@ const EVENT = 'optimizely:cms:contentSaved'
 
 describe('OnPageEdit (contentSaved handler)', () => {
   let container: HTMLDivElement
-  let root: Root
+  let root: Root | undefined
 
   beforeEach(() => {
     container = document.createElement('div')
     document.body.appendChild(container)
   })
 
-  afterEach(() => {
-    try {
-      act(() => {
-        root?.unmount()
+  afterEach(async () => {
+    // Unmount inside React's act
+    if (root) {
+      await act(async () => {
+        root!.unmount()
       })
-    } catch {}
+      root = undefined
+    }
     container.remove()
     jest.clearAllMocks()
   })
@@ -51,7 +50,7 @@ describe('OnPageEdit (contentSaved handler)', () => {
     expect(addSpy).toHaveBeenCalledWith(EVENT, expect.any(Function))
 
     await act(async () => {
-      root.unmount()
+      root!.unmount()
     })
 
     expect(removeSpy).toHaveBeenCalledWith(EVENT, expect.any(Function))

@@ -1,5 +1,3 @@
-/** @jest-environment node */
-
 jest.mock('../content-area/mapper', () => {
   // Keep this as a function component so React treats it like a real component.
   // We don't actually render; we just inspect the returned element tree.

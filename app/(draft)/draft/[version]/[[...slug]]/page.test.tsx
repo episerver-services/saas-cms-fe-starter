@@ -1,5 +1,3 @@
-/** @jest-environment node */
-
 import React from 'react'
 
 // ---- Mocks (define first) ----

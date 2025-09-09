@@ -1,5 +1,3 @@
-/** @jest-environment node */
-
 // Mock Block so we can assert props are forwarded
 jest.mock('./block', () => {
   const Block = (props: any) => ({ type: 'Block', props })

@@ -1,5 +1,3 @@
-/** @jest-environment node */
-
 // Mock modules first (hoisted safe)
 jest.mock('@/app/components/content-area/mapper', () => {
   const Comp = (props: any) => ({

@@ -1,5 +1,3 @@
-/** @jest-environment node */
-
 import { GET } from './route'
 
 jest.mock('@/lib/optimizely/fetch', () => ({
