@@ -202,3 +202,17 @@ docker run -p 3000:3000 --env-file .env.local saas-cms-fe-starter
 ✅ Visual Builder fallback support (via experience wrappers)  
 ✅ Draft mode for unpublished pages and blocks  
 ✅ Mock-driven development support via Storybook
+
+---
+## 🔮 What's Next
+
+Here are some suggested follow‑up tasks to evolve this starter into a fully production‑ready head:
+
+- 🎨 **CMS Theming & Design System** – Introduce a component library (Chakra, Radix, custom design system).
+- 🧭 **Navigation Management** – Map CMS menus and enable multi‑locale navigation.
+- 📝 **Visual Builder Expansion** – Add full Visual Builder block mapping with live preview support.
+- 🔍 **SEO Enhancements** – Rich metadata, schema.org, sitemap automation, OpenGraph defaults.
+- 📈 **Observability** – Integrate Sentry/LogRocket for error + performance tracking.
+- ⚙️ **CI/CD** – GitHub Actions or Vercel pipelines with lint/test/build checks.
+- 🌍 **Multi‑locale Support** – Add i18n routing, content fallbacks, and language switcher.
+- 🔐 **Auth & Personalisation** – Integrate Opti ID, feature flags, and AB testing.
