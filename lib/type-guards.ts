@@ -4,7 +4,7 @@
  */
 export interface VercelErrorLike {
   status: number
-  message: Error
+  message: Error | Error
   cause?: Error
 }
 
