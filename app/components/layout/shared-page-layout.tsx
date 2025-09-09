@@ -22,16 +22,16 @@ const geistMono = Geist_Mono({
 /**
  * Shared layout wrapper for all CMS-rendered pages.
  *
- * Includes:
- * - Placeholder fonts (Geist Sans + Mono)
- * - Skip link for accessibility
- * - Global site structure: Header, Footer, Main
- * - Optional CMS preview JS injector (Optimizely)
- * - Web Vitals script for analytics/debugging
+ * Responsibilities:
+ * - Load placeholder fonts (Geist Sans + Geist Mono) via CSS variables
+ * - Provide a consistent site structure: Header, Footer, and <main>
+ * - Inject a skip link for accessibility navigation
+ * - Optionally include the Optimizely CMS preview communication script
+ * - Initialise Web Vitals monitoring for analytics/debugging
  *
- * @param props.locale - Site language (default: "en")
- * @param props.children - React page content
- * @param props.includeCMSPreview - If true, injects Optimizely CMS communication JS (for preview/editing)
+ * @param locale - Document language, applied to the <html> tag (default: "en")
+ * @param children - React node tree for the current page
+ * @param includeCMSPreview - If true, injects Optimizely CMS preview script in production
  */
 export default function SharedPageLayout({
   locale = 'en',

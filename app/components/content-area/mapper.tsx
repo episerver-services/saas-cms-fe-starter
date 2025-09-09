@@ -2,13 +2,19 @@ import { ExperienceElement } from '@/lib/optimizely/types/experience'
 import Block from './block'
 
 /**
- * Maps a list of CMS blocks or Visual Builder components to React output.
- * Handles standard rendering and nested slot recursion.
+ * ContentAreaMapper
  *
- * @param blocks - Array of CMS blocks to render (used in non-VB mode)
- * @param preview - Whether preview mode is enabled
- * @param isVisualBuilder - If true, renders VB-style layout elements
- * @param experienceElements - Array of VB composition components
+ * Maps a list of CMS blocks or Visual Builder components to React output.
+ * Handles both standard CMS block rendering and Visual Builder (VB) experience layouts.
+ * Supports recursive slot rendering for nested areas.
+ *
+ * @param blocks - Array of CMS blocks to render (non-VB mode only).
+ * @param preview - Whether preview mode is enabled (adds edit hints and props).
+ * @param isVisualBuilder - If true, renders Visual Builder layout elements instead of CMS blocks.
+ * @param experienceElements - Array of Visual Builder composition elements to render.
+ *
+ * @returns React elements representing the mapped blocks or VB components,
+ *          or `null` if nothing is provided.
  */
 function ContentAreaMapper({
   blocks,
@@ -75,11 +81,12 @@ function ContentAreaMapper({
 }
 
 /**
- * Recursively renders any nested slots found inside a block's props.
- * Looks for fields that match the shape: { items: Block[] }
+ * Recursively renders nested slot areas found inside a block’s props.
+ * Slots are identified by keys with the shape `{ items: Block[] }`.
  *
- * @param props - The raw props passed to a Block component
- * @param preview - Whether preview mode is enabled
+ * @param props - Raw props passed to a Block component.
+ * @param preview - Whether preview mode is enabled.
+ * @returns React elements for all nested slot areas, or `null` if none exist.
  */
 function renderNestedSlots(props: Record<string, any>, preview: boolean) {
   const slotKeys = Object.keys(props).filter(

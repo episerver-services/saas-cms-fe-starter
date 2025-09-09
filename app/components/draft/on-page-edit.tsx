@@ -15,14 +15,20 @@ interface ContentSavedEventArgs {
 }
 
 interface OnPageEditProps {
+  /** The current content version displayed on the page */
   version: string
+  /** The current draft route (e.g. `/draft/{version}/en/page`) */
   currentRoute: string
 }
 
 /**
- * Handles the Optimizely `contentSaved` event.
- * If a new version of the content is detected, redirects to the correct draft route.
- * Otherwise, refreshes the current page to show latest content.
+ * React client component that listens for the Optimizely
+ * `optimizely:cms:contentSaved` event.
+ *
+ * - If a new content version is detected, it navigates to the updated draft route.
+ * - If the version matches, it simply refreshes the current route to pull the latest content.
+ *
+ * Mounted in draft/preview routes to ensure editors see changes immediately.
  */
 const OnPageEdit = ({ version, currentRoute }: OnPageEditProps) => {
   const router = useRouter()
@@ -42,7 +48,6 @@ const OnPageEdit = ({ version, currentRoute }: OnPageEditProps) => {
     }
 
     window.addEventListener('optimizely:cms:contentSaved', handleContentSaved)
-
     return () => {
       window.removeEventListener(
         'optimizely:cms:contentSaved',

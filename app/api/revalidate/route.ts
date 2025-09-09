@@ -4,13 +4,15 @@ import { type NextRequest, NextResponse } from 'next/server'
 import crypto from 'node:crypto'
 
 /**
- * Handles Optimizely webhook POST requests for content publishing.
- * Validates the webhook (HMAC header if provided, otherwise query secret),
- * resolves the content by GUID, determines its URL, and triggers revalidation
- * for the corresponding Next.js page or cache tag.
+ * Optimizely publish webhook handler (POST).
  *
- * @param request - The incoming webhook POST request.
- * @returns A JSON response indicating success or failure.
+ * Validates the request (HMAC header if configured, else query secret), extracts a `docId`,
+ * resolves the content GUID, infers the public URL, and triggers revalidation for either
+ * a page path or a cache tag (header/footer).
+ *
+ * @param request - The incoming webhook POST request (Next.js `NextRequest` or standard `Request` in tests).
+ * @returns {Promise<NextResponse>} JSON indicating revalidation status or an error.
+ * @throws If signature validation fails, the query secret is invalid, or the JSON body is malformed.
  */
 export async function POST(
   request: NextRequest | Request
@@ -59,10 +61,16 @@ export async function POST(
 /* ------------------------- Auth & Parsing Helpers ------------------------- */
 
 /**
- * If the request includes an HMAC signature header and a shared secret is set,
- * verify the signature. Otherwise no-op (falls back to query secret).
+ * Verifies the HMAC signature when both:
+ *   - The request contains an `x-optimizely-signature` header (hex-encoded), and
+ *   - `OPTIMIZELY_WEBHOOK_SECRET` is set.
  *
- * Uses header: `x-optimizely-signature` (hex), algo: HMAC-SHA256.
+ * Uses HMAC-SHA256 and constant-time comparison. If either the header or secret
+ * is missing, this function is a no-op (fallback to query secret applies).
+ *
+ * @param request - A Next.js `NextRequest` or standard `Request`.
+ * @returns {Promise<void>} Resolves if the signature is valid or not required.
+ * @throws {Error} If the signature is present but invalid (`"Invalid signature"`).
  */
 async function verifySignatureIfPresent(request: Request | NextRequest) {
   const signature = request.headers.get('x-optimizely-signature')
@@ -81,10 +89,15 @@ async function verifySignatureIfPresent(request: Request | NextRequest) {
 }
 
 /**
- * Validates the Optimizely webhook secret in the request query string.
- * Throws an error if the secret is missing or invalid.
+ * Validates the webhook's query-string secret.
  *
- * Works with both NextRequest and the standard Request used in tests.
+ * Reads `cg_webhook_secret` from the request URL and compares to
+ * `OPTIMIZELY_REVALIDATE_SECRET`. Intended as a fallback/legacy check
+ * when HMAC signatures are not used.
+ *
+ * @param request - A Next.js `NextRequest` or standard `Request`.
+ * @returns {void}
+ * @throws {Error} If the secret is missing or does not match (`"Invalid credentials"`).
  */
 function validateWebhookSecret(request: NextRequest | Request): void {
   const secret = new URL(request.url).searchParams.get('cg_webhook_secret')
@@ -95,8 +108,14 @@ function validateWebhookSecret(request: NextRequest | Request): void {
 }
 
 /**
- * Safely parses JSON and extracts a string docId, or ''.
- * Converts bad JSON into a clean 400 response via the error mapper.
+ * Parses the JSON body and extracts `data.docId` safely.
+ *
+ * Example `docId` format: `{GUID_WITHOUT_DASHES}_Published_en`
+ * Only the `"Published"` case triggers page revalidation.
+ *
+ * @param req - A Next.js `NextRequest` or standard `Request`.
+ * @returns {Promise<string>} The extracted `docId` or an empty string when not present.
+ * @throws {Error} If the body is not valid JSON (`"Bad JSON"`).
  */
 async function extractDocIdSafe(req: Request | NextRequest): Promise<string> {
   let json: unknown
@@ -112,11 +131,11 @@ async function extractDocIdSafe(req: Request | NextRequest): Promise<string> {
 /* --------------------------- CMS Interaction ----------------------------- */
 
 /**
- * Fetches Optimizely content by GUID.
+ * Fetches a content item by GUID via the local Optimizely SDK.
  *
- * @param guid - The cleaned GUID (without dashes).
- * @returns The resolved content item from the CMS.
- * @throws If content is not found.
+ * @param guid - The content GUID without dashes (format expected by the API).
+ * @returns {Promise<any>} The first resolved content item.
+ * @throws {Error} If no item is returned (`"Content not found"`).
  */
 async function fetchContentByGuid(guid: string): Promise<any> {
   const { _Content } = await optimizely.GetContentByGuid({ guid })
@@ -130,11 +149,15 @@ async function fetchContentByGuid(guid: string): Promise<any> {
 /* ----------------------------- URL Utilities ----------------------------- */
 
 /**
- * Ensures the URL is locale-prefixed and cleaned of trailing slashes.
+ * Normalizes a CMS URL and ensures a locale prefix.
  *
- * @param url - The CMS-provided relative URL.
- * @param locale - Locale to prefix (e.g., "en").
- * @returns The locale-prefixed normalized path.
+ * - Prepends a leading slash when missing.
+ * - Strips a trailing slash.
+ * - Ensures the path begins with `/${locale}` (idempotent).
+ *
+ * @param url - A CMS-provided relative URL (e.g., `/about` or `about/`).
+ * @param locale - The locale to prefix (e.g., `"en"`).
+ * @returns {string} A normalized locale-prefixed path (e.g., `/en/about`).
  */
 function normalizeUrl(url: string, locale: string): string {
   let normalizedUrl = url.startsWith('/') ? url : `/${url}`
@@ -147,8 +170,14 @@ function normalizeUrl(url: string, locale: string): string {
 }
 
 /**
- * Revalidates either a cache tag or a specific page path.
- * Uses exact path segment matching for "header" and "footer" tags.
+ * Revalidates a cache tag or specific path.
+ *
+ * - If the URL path includes `"footer"`, revalidates the `optimizely-footer` tag.
+ * - If the URL path includes `"header"`, revalidates the `optimizely-header` tag.
+ * - Otherwise, revalidates the exact page path.
+ *
+ * @param urlWithLocale - A normalized, locale-prefixed path (e.g., `/en/about`).
+ * @returns {Promise<void>}
  */
 async function handleRevalidation(urlWithLocale: string): Promise<void> {
   const segs = urlWithLocale.split('/').filter(Boolean)
@@ -164,10 +193,17 @@ async function handleRevalidation(urlWithLocale: string): Promise<void> {
 /* -------------------------------- Errors --------------------------------- */
 
 /**
- * Handles and formats errors into a JSON response.
+ * Maps known errors to structured JSON responses.
  *
- * @param error - The thrown error during request processing.
- * @returns A formatted JSON response with error status.
+ * Known messages:
+ * - `"Invalid credentials"` → 401
+ * - `"Invalid signature"` → 401
+ * - `"Bad JSON"` → 400
+ * - `"Content not found"` → 500
+ * - Any other `Error` → 500
+ *
+ * @param error - Any thrown value during webhook processing.
+ * @returns {NextResponse} A JSON response with `message` and HTTP status.
  */
 function handleError(error: unknown): NextResponse {
   if (error instanceof Error) {
@@ -201,7 +237,11 @@ function handleError(error: unknown): NextResponse {
 }
 
 /**
- * Type guard to check if the given metadata includes a `url` field.
+ * Type guard that checks whether metadata includes a `url` object
+ * with one of the expected shapes (simple/hierarchical).
+ *
+ * @param metadata - Unknown metadata value to inspect.
+ * @returns {metadata is { url: { type?: string; default?: string; hierarchical?: string } }} True if `url` is present.
  */
 function hasUrlMetadata(metadata: unknown): metadata is {
   url: {

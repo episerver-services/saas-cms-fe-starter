@@ -1,9 +1,26 @@
+// -----------------------------------------------------------------------------
+// Placeholder Page Heading component.
+// Provides a simple styled <header> element for debugging and layout scaffolding.
+// Final typography, colour tokens, and spacing should be replaced once the
+// design system is finalised.
+// -----------------------------------------------------------------------------
+
 'use client'
 
-type PageHeadingProps = {
+/**
+ * Props for the `Heading` component.
+ */
+export type PageHeadingProps = {
+  /** Text label to display inside the heading. */
   label: string
 }
 
+/**
+ * Renders a simple placeholder heading.
+ *
+ * @param label - The text string to render as the heading.
+ * @returns A styled <header> element.
+ */
 export function Heading({ label }: PageHeadingProps) {
   return (
     <header

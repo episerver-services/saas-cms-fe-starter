@@ -4,17 +4,21 @@ import { useRouter, usePathname } from 'next/navigation'
 import CTAButton from '@/app/components/ui/cta-button'
 
 /**
- * UI component for displaying draft-only page actions.
+ * Renders draft-only action buttons for editors when running in mock Optimizely mode.
  *
- * Renders within `/draft/` routes when `NEXT_PUBLIC_MOCK_OPTIMIZELY` is `'true'`,
- * allowing editors to refresh content or exit draft mode.
+ * This component only appears if:
+ * - `NEXT_PUBLIC_MOCK_OPTIMIZELY === 'true'`
+ * - The current pathname begins with `/draft/`
  *
- * Buttons:
- * - "Refresh Page": Re-fetches updated CMS draft content.
- * - "Disable Draft": Calls `/api/draft/disable` to exit Next.js draft mode.
+ * When visible, it provides two actions:
+ * - **Refresh Page** → Calls `router.refresh()` to reload CMS draft content.
+ * - **Disable Draft** → Sends a request to `/api/draft/disable`, then refreshes the page to exit draft mode.
  *
- * To ease testing, consumers may pass `pathname` explicitly; otherwise we read it
- * from Next's `usePathname()` hook.
+ * @param props - Component props
+ * @param props.pathname - Optional pathname override (mainly for tests).
+ *   If omitted, the current pathname is read via Next.js `usePathname()`.
+ *
+ * @returns React element with action buttons, or `null` if draft actions are not applicable.
  */
 type DraftActionsProps = {
   /** Optional pathname override (mainly for tests). If omitted, uses usePathname(). */

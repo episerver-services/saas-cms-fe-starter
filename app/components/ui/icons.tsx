@@ -1,5 +1,14 @@
+// -----------------------------------------------------------------------------
+// Placeholder set of SVG social media icons.
+// Provides simple inline React components for use in headers, footers, or share UIs.
+// Replace or extend these with your design system’s official icons as needed.
+// -----------------------------------------------------------------------------
 import type React from 'react'
 
+/**
+ * Collection of available SVG icon components.
+ * Each key maps to a functional component that renders the given icon.
+ */
 export const Icons = {
   twitter: (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>

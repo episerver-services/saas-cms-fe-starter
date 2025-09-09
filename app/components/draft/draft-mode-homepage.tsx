@@ -4,11 +4,27 @@ import { Suspense } from 'react'
 import ContentAreaMapper from '../content-area/mapper'
 
 /**
- * Renders the latest version of the Start Page in Draft Mode.
- * Intended for use on preview routes when editors want to see the most recent unpublished state.
+ * Renders the most recent draft version of the site’s Start Page.
  *
- * @param locales - The current locale as a string, used to fetch localised draft content
- * @returns A React component that renders blocks using ContentAreaMapper, or null during builds or on error
+ * This is used in preview (`draftMode`) to let editors see unpublished
+ * or in-progress changes for the Start Page content.
+ *
+ * Behavior:
+ * - Skips rendering entirely if `process.env.IS_BUILD === 'true'` to avoid
+ *   draft queries during build/SSG.
+ * - Fetches all draft versions of the Start Page for the given locale.
+ * - Determines the highest available version number.
+ * - Renders only the blocks from that latest version using `ContentAreaMapper`.
+ * - Logs and returns `null` if an error occurs.
+ *
+ * @param locales - Raw locale string from route params. Normalized via `getValidLocale`.
+ * @returns A Suspense-wrapped React node for the latest draft Start Page,
+ *   or `null` if skipped (build mode) or an error occurs.
+ *
+ * @example
+ * ```tsx
+ * <DraftModeHomePage locales="en" />
+ * ```
  */
 export default async function DraftModeHomePage({
   locales,

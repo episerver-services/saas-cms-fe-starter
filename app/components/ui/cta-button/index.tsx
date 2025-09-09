@@ -1,6 +1,16 @@
-// This is a mock up of the current CTA button on the live site. The new styles will need to be added to the Tailwind
-// config file and global CSS file. A lot of the mock data and layout can be reused. As of this typing
-// the new site style and layout had not been finalised.
+// -----------------------------------------------------------------------------
+// This is a placeholder implementation of a primary Call-to-Action
+// button. It implements example behaviour and class structure,
+// while keeping the visual system minimal until final design tokens and
+// styles are agreed.
+//
+// Notes
+// - Final colours, sizes and typography should be consolidated into Tailwind
+//   config / CSS variables.
+// - This component intentionally supports internal, external and “no-link”
+//   (button) modes to cover all CTA use-cases across the site.
+// -----------------------------------------------------------------------------
+
 'use client'
 
 import Link from 'next/link'
@@ -8,25 +18,37 @@ import { twMerge } from 'tailwind-merge'
 import type { CTAButtonProps } from './cta-button.types'
 
 /**
- * Determines if a link is external (URL, tel:, or mailto:).
+ * Determine whether a provided href points to an external destination.
  *
- * @param href - The link to check
- * @returns True if the link is external
+ * External is defined as:
+ * - Absolute HTTP(S) URL, or
+ * - `mailto:` link, or
+ * - `tel:` link.
+ *
+ * @param href - The candidate link to inspect.
+ * @returns True if the link should render as an external `<a>`.
  */
-const isExternal = (href: string): boolean =>
-  /^https?:\/\//i.test(href) ||
-  href.startsWith('mailto:') ||
-  href.startsWith('tel:')
+function isExternal(href: string): boolean {
+  return (
+    /^https?:\/\//i.test(href) ||
+    href.startsWith('mailto:') ||
+    href.startsWith('tel:')
+  )
+}
 
 /**
- * Returns Tailwind classes for button style variants.
+ * Compute Tailwind classes for the CTA visual variant.
  *
- * @param style - The style variant: "red" or "white"
- * @returns Combined Tailwind class string
+ * Variants:
+ * - `"red"` (default): brand background with white text.
+ * - `"white"`: white background with neutral border and text.
+ *
+ * @param style - Visual style variant name.
+ * @returns A merged Tailwind class string.
  */
-const variantClasses = (style: CTAButtonProps['style']) => {
+function variantClasses(style: CTAButtonProps['style']): string {
   const base =
-    'inline-flex items-center justify-center rounded-full px-6 py-3 text-[16px] font-bold uppercase transition-colors duration-200 ease-in-out'
+    'inline-flex items-center justify-center rounded-full px-6 py-3 text-[16px] font-bold uppercase transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
 
   if (style === 'white') {
     return twMerge(
@@ -35,26 +57,42 @@ const variantClasses = (style: CTAButtonProps['style']) => {
     )
   }
 
+  // default: "red"
   return twMerge(
     base,
+    // Uses a CSS variable for brand red so theming can swap values centrally.
     'bg-brand text-white hover:bg-[rgb(var(--brand-red-hover))]'
   )
 }
 
 /**
- * CTAButton – A reusable call-to-action button that supports:
- * - Internal and external links
- * - Responsive label text (desktop + mobile)
- * - Style variants (red, white)
- * - Optional click handler (onClick)
- * - Optional close-bar behaviour
+ * CTAButton – Reusable site-wide call-to-action.
  *
- * If no `link.href` is provided, it renders a <button> element instead of a <Link>/<a>.
+ * Renders as:
+ * - `<button>` when `link.href` is not provided
+ * - Next.js `<Link>` for internal routes
+ * - `<a>` for external links (`http(s)`, `mailto`, `tel`)
  *
- * @param props - CTAButtonProps
- * @returns Rendered CTA element
+ * Features:
+ * - Separate desktop and mobile labels
+ * - Visual variants (`"red"` or `"white"`)
+ * - Optional `onClick` handling
+ * - Optional “close bar” behaviour via `closeBarOnClick` + `onCloseBar`
+ *
+ * Accessibility:
+ * - When rendering as a link, `link.ariaLabel` can be supplied for screen readers.
+ *
+ * @param textDesktop - Label shown on desktop viewports.
+ * @param textMobile - Optional label override for smaller viewports; falls back to `textDesktop`.
+ * @param link - Optional link config; if omitted, a `<button>` is rendered.
+ * @param style - Visual variant; `"red"` (default) or `"white"`.
+ * @param className - Optional Tailwind class overrides/extensions.
+ * @param onClick - Optional click handler for custom behaviour.
+ * @param closeBarOnClick - If true, calls `onCloseBar` after click.
+ * @param onCloseBar - Optional handler for closing a surrounding UI bar.
+ * @returns A CTA element appropriate for the input props.
  */
-const CTAButton = ({
+export default function CTAButton({
   textDesktop,
   textMobile,
   link,
@@ -63,12 +101,13 @@ const CTAButton = ({
   onClick,
   closeBarOnClick,
   onCloseBar,
-}: CTAButtonProps) => {
-  const labelMobile = textMobile?.trim() || textDesktop
+}: CTAButtonProps) {
+  const labelMobile = (textMobile?.trim() || textDesktop).trim()
   const classes = twMerge(variantClasses(style), className)
 
   /**
-   * Combined click handler for manual and close-bar clicks.
+   * Combined click handler that always runs the caller’s `onClick`,
+   * and optionally triggers the close-bar interaction if requested.
    */
   const handleClick = () => {
     onClick?.()
@@ -77,7 +116,9 @@ const CTAButton = ({
     }
   }
 
-  // No link: Render as button (used for "Try again" etc.)
+  // ───────────────────────────────────────────────────────────────────────────
+  // No link supplied → render as <button>
+  // ───────────────────────────────────────────────────────────────────────────
   if (!link?.href) {
     return (
       <button type="button" className={classes} onClick={handleClick}>
@@ -87,12 +128,15 @@ const CTAButton = ({
     )
   }
 
+  // Build rel for external targets safely
   const rel =
     link.openIn === '_blank'
       ? ['noopener', 'noreferrer', link.rel].filter(Boolean).join(' ')
       : link.rel || undefined
 
-  // Internal link
+  // ───────────────────────────────────────────────────────────────────────────
+  // Internal route → Next.js <Link>
+  // ───────────────────────────────────────────────────────────────────────────
   if (!isExternal(link.href)) {
     return (
       <Link
@@ -107,7 +151,9 @@ const CTAButton = ({
     )
   }
 
-  // External link
+  // ───────────────────────────────────────────────────────────────────────────
+  // External destination → <a>
+  // ───────────────────────────────────────────────────────────────────────────
   return (
     <a
       href={link.href}
@@ -122,5 +168,3 @@ const CTAButton = ({
     </a>
   )
 }
-
-export default CTAButton

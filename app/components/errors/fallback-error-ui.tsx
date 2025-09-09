@@ -4,13 +4,17 @@ import { useEffect } from 'react'
 import CTAButton from '@/app/components/ui/cta-button'
 
 /**
- * A generic fallback UI for GraphQL or runtime rendering errors.
- * Displays an optional title, message, and link back to the homepage.
+ * A generic fallback UI for runtime rendering or GraphQL errors.
+ *
+ * Intended as a last-resort error boundary for CMS-driven routes or components.
+ * Provides a clear message to the user while optionally logging the error
+ * for developers in development mode.
  *
  * @param title - Heading displayed to the user (default: "Something went wrong")
- * @param message - Descriptive error message (default: "We couldn’t load this content.")
- * @param showHomeLink - Whether to show a link back to the homepage
- * @param error - Optional error object for dev-time logging
+ * @param message - Descriptive error message (default: "We couldn’t load this content. Please try again later.")
+ * @param showHomeLink - Whether to show a link back to the homepage (default: true)
+ * @param error - Optional error object, logged only in development mode
+ * @returns A styled `<main>` element with error UI and optional navigation link
  */
 export default function FallbackErrorUI({
   title = 'Something went wrong',

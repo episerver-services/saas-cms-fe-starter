@@ -18,9 +18,8 @@ const childrenOf = (el: any) =>
 
 /** Return the array of top-level *node wrappers* (section/component). */
 const nodeWrappers = (el: any) => {
-  const outer = childrenOf(el) // [ <div.inner> ]
-  const inner = childrenOf(outer[0]) // [ ...node wrappers... ]
-  return inner
+  // After the refactor, wrappers are direct children of the single outer div
+  return childrenOf(el)
 }
 
 describe('VisualBuilderExperienceWrapper', () => {

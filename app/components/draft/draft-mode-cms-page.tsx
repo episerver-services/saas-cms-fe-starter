@@ -7,12 +7,36 @@ import { SafeVisualBuilderExperience } from '@/lib/optimizely/types/experience'
 import ContentAreaMapper from '../content-area/mapper'
 
 /**
- * Renders the latest draft version of a CMS page or a Visual Builder experience.
- * Used during preview mode to reflect unsaved or in-progress changes.
+ * Renders the most recent draft version of a CMS page or Visual Builder experience.
  *
- * @param locales - The raw locale string from the URL or params
- * @param slug - The content path (slug) for identifying the page or experience
- * @returns A Suspense-wrapped React component tree or a notFound() call
+ * This route handler is used exclusively in preview mode (`draftMode`)
+ * to show unpublished or in-progress changes.
+ *
+ * Load order:
+ * 1. Attempts to fetch a draft CMS page by slug + locale.
+ * 2. If none found, attempts to fetch a Visual Builder (VB) Experience draft.
+ * 3. Selects the highest version number from available results.
+ * 4. Renders the matching draft content inside a Suspense boundary.
+ * 5. Falls back to `notFound()` if no drafts are available.
+ *
+ * @param locales - Raw locale string from the URL or route params.
+ *   Normalized using `getValidLocale`.
+ * @param slug - The CMS path or slug used to resolve the draft content.
+ * @returns A Suspense-wrapped React node with draft content,
+ *   or a Next.js `notFound()` response if no draft exists.
+ *
+ * @example
+ * ```tsx
+ * // Usage inside /draft/[...slug]/page.tsx
+ * export default function DraftRoute({ params }) {
+ *   return (
+ *     <DraftModeCmsPage
+ *       locales={params.locale}
+ *       slug={`/${params.slug?.join('/')}`}
+ *     />
+ *   )
+ * }
+ * ```
  */
 export default async function DraftModeCmsPage({
   locales,

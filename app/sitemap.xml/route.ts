@@ -1,8 +1,12 @@
 export const dynamic = 'force-dynamic'
 
 /**
- * Stubbed sitemap.xml response.
- * Replace with CMS-powered sitemap once integration is active.
+ * Generates a **stubbed `sitemap.xml`** response.
+ *
+ * This placeholder returns a fixed set of static pages and should be
+ * replaced with a CMS-powered sitemap once integration is active.
+ *
+ * @returns A `Response` object containing XML markup for the sitemap.
  */
 export async function GET() {
   const domain = process.env.SITE_DOMAIN ?? 'http://localhost:3000'

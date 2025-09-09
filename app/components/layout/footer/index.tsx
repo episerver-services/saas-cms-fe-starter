@@ -2,6 +2,12 @@
 
 import Link from 'next/link'
 
+/**
+ * Placeholder global footer.
+ *
+ * Provides a static navigation menu and copyright text.
+ * Replace with a CMS-driven footer when content is available.
+ */
 export default function Footer() {
   return (
     <footer className="border-t bg-white py-10">

@@ -7,73 +7,78 @@ import type {
 } from '@/lib/optimizely/types/experience'
 
 /**
- * Renders a Visual Builder experience based on layout composition.
- * Supports both `section` and `component` node types.
+ * Visual Builder experience renderer.
  *
- * @param experience - The Visual Builder experience object containing layout nodes
- * @returns Rendered layout or `null` if invalid
+ * Renders a layout composed of sections → rows → columns → elements, as provided
+ * by Optimizely Visual Builder. Supports both `section` nodes (grid-style layout)
+ * and `component` nodes (standalone component).
+ *
+ * - Sections: iterate rows → columns and render each column’s `elements` via
+ *   `ContentAreaMapper` in Visual Builder mode.
+ * - Components: render a single component via `ContentAreaMapper` in CMS-block mode.
+ *
+ * @param experience - A safe, normalized Visual Builder experience (composition + nodes).
+ * @returns React output for the composition, or `null` when no nodes are available.
  */
 export default function VisualBuilderExperienceWrapper({
   experience,
 }: {
   experience?: SafeVisualBuilderExperience
 }) {
-  if (!experience?.composition?.nodes) {
-    return null
-  }
+  // Guard: nothing to render
+  if (!experience?.composition?.nodes?.length) return null
 
   const { nodes } = experience.composition
 
   return (
     <div className="vb:outline relative w-full flex-1">
-      <div className="vb:outline relative w-full flex-1">
-        {nodes.map((node: VisualBuilderNode) => {
-          // Render section with rows and columns
-          if (node.nodeType === 'section') {
-            return (
-              <div
-                key={node.key}
-                className="vb:grid relative flex w-full flex-col flex-wrap"
-                data-epi-block-id={node.key}
-              >
-                {node.rows?.map((row: Row) => (
-                  <div
-                    key={row.key}
-                    className="vb:row flex flex-1 flex-col flex-nowrap md:flex-row"
-                  >
-                    {row.columns?.map((column: Column) => (
-                      <div
-                        key={column.key}
-                        className="vb:col flex flex-1 flex-col flex-nowrap justify-start"
-                      >
-                        <ContentAreaMapper
-                          experienceElements={column.elements}
-                          isVisualBuilder
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            )
-          }
+      {nodes.map((node: VisualBuilderNode) => {
+        // SECTION: rows → columns → elements
+        if (node.nodeType === 'section') {
+          return (
+            <div
+              key={node.key}
+              className="vb:grid relative flex w-full flex-col flex-wrap"
+              data-epi-block-id={node.key}
+            >
+              {node.rows?.map((row: Row) => (
+                <div
+                  key={row.key}
+                  className="vb:row flex flex-1 flex-col flex-nowrap md:flex-row"
+                >
+                  {row.columns?.map((column: Column) => (
+                    <div
+                      key={column.key}
+                      className="vb:col flex flex-1 flex-col flex-nowrap justify-start"
+                    >
+                      <ContentAreaMapper
+                        experienceElements={column.elements}
+                        isVisualBuilder
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )
+        }
 
-          // Render standalone component node
-          if (node.nodeType === 'component' && node.component) {
-            return (
-              <div
-                key={node.key}
-                className="vb:node relative w-full"
-                data-epi-block-id={node.key}
-              >
-                <ContentAreaMapper blocks={[node.component]} />
-              </div>
-            )
-          }
+        // COMPONENT: standalone component node
+        if (node.nodeType === 'component' && node.component) {
+          return (
+            <div
+              key={node.key}
+              className="vb:node relative w-full"
+              data-epi-block-id={node.key}
+            >
+              <ContentAreaMapper blocks={[node.component]} />
+            </div>
+          )
+        }
 
-          return null
-        })}
-      </div>
+        // Unknown/unsupported node
+        return null
+      })}
     </div>
   )
 }

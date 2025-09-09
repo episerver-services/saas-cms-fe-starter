@@ -3,19 +3,21 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * Handles a GET request to enable Next.js draft mode and redirect the user.
+ * Enables Next.js draft mode (preview mode) and redirects the user.
  *
- * This route is typically used for entering preview mode by visiting a URL like:
+ * This route is typically called when entering preview mode via a URL like:
  * `/api/preview?url=/some/page`.
  *
  * Steps:
  * - Extracts the `url` query parameter from the request.
- * - Ensures the URL is absolute (NextResponse.redirect requires it).
+ * - Resolves the target into an absolute URL.
  * - Enables draft mode using Next.js headers API.
- * - Redirects the user to the specified `url`.
+ * - Redirects the user to the specified target.
  *
  * @param req - The incoming Next.js `NextRequest` object.
- * @returns A redirect `NextResponse` to the target URL, or a 400 if the param is missing.
+ * @returns {NextResponse} A redirect to the target URL if provided,
+ * or a `400 Bad Request` response if the `url` parameter is missing.
+ * @throws If `draftMode()` fails or the target URL is invalid.
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)

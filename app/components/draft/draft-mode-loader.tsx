@@ -1,5 +1,8 @@
 import { Loader2 } from 'lucide-react'
 
+/**
+ * Skeleton loader displayed while fetching draft content in preview mode.
+ */
 export function DraftModeLoader() {
   return (
     <div className="flex min-h-[50vh] w-full flex-col items-center justify-center space-y-6 p-8">
