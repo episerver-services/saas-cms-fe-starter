@@ -17,6 +17,37 @@ describe('utils/misc', () => {
     })
   })
 
+  describe('createUrl with plain objects', () => {
+    it('builds URL with simple key-value pairs', () => {
+      const url = createUrl('/search', { q: 'foo', page: 2 })
+      expect(url).toContain('/search?')
+      expect(url).toContain('q=foo')
+      expect(url).toContain('page=2')
+    })
+
+    it('skips null/undefined values', () => {
+      const url = createUrl('/search', {
+        q: 'foo',
+        empty: undefined,
+        none: null,
+      })
+      expect(url).toBe('/search?q=foo')
+    })
+
+    it('handles arrays by repeating params', () => {
+      const url = createUrl('/search', { tag: ['a', 'b'] })
+      // Order may vary
+      expect(url).toContain('/search?')
+      expect(url).toContain('tag=a')
+      expect(url).toContain('tag=b')
+    })
+
+    it('returns just pathname if object is empty', () => {
+      const url = createUrl('/search', {})
+      expect(url).toBe('/search')
+    })
+  })
+
   describe('withLeadingSlash', () => {
     it('returns path unchanged if it already starts with "/"', () => {
       expect(withLeadingSlash('/about')).toBe('/about')

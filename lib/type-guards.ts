@@ -3,8 +3,11 @@
  * as returned by middleware, Next.js handlers, or API routes.
  */
 export interface VercelErrorLike {
+  /** HTTP-like status code (e.g. 404, 500). */
   status: number
-  message: Error | Error
+  /** Error message string (not an Error instance). */
+  message: string
+  /** Optional cause, usually an Error object. */
   cause?: Error
 }
 
@@ -21,15 +24,15 @@ export const isObject = (value: unknown): value is Record<string, unknown> => {
 }
 
 /**
- * Type guard that determines whether an unknown error object matches the VercelErrorLike interface.
+ * Type guard that determines whether an unknown error object is "Error-like".
  *
  * It supports:
  * - Native `Error` instances
  * - Objects extending from `Error`
- * - POJOs with a matching prototype chain
+ * - Plain objects that conform to the {@link VercelErrorLike} contract
  *
  * @param error - The value to test.
- * @returns True if the error is compatible with VercelErrorLike.
+ * @returns True if the error is compatible with `VercelErrorLike` or an `Error`.
  */
 export const isVercelError = (error: unknown): error is VercelErrorLike => {
   if (!isObject(error)) return false

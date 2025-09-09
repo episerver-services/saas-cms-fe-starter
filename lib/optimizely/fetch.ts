@@ -2,6 +2,14 @@ import { getMockResponse } from '@/__mocks__/preview-page'
 import { isVercelError } from '../type-guards'
 import { draftMode } from 'next/headers'
 
+/**
+ * Options for the low-level Optimizely GraphQL fetcher.
+ *
+ * - `headers`   Extra HTTP headers to include.
+ * - `cache`     Next.js/Fetch cache mode (e.g., 'force-cache', 'no-store').
+ * - `preview`   Force preview auth (overrides Draft Mode detection).
+ * - `cacheTag`  Optional Next.js tag to associate with the request for revalidation.
+ */
 interface OptimizelyFetchOptions {
   headers?: Record<string, string>
   cache?: RequestCache
@@ -9,17 +17,31 @@ interface OptimizelyFetchOptions {
   cacheTag?: string
 }
 
+/**
+ * Envelope of a GraphQL request.
+ */
 interface OptimizelyFetch<Variables> extends OptimizelyFetchOptions {
   query: string
   variables?: Variables
 }
 
+/**
+ * Minimal GraphQL response shape.
+ */
 interface GraphqlResponse<Response> {
   errors: unknown[]
   data: Response
 }
 
-/** Safely read Next.js draft mode without requiring a request context. */
+/**
+ * Safely checks whether Next.js Draft Mode is enabled.
+ *
+ * Draft Mode (`draftMode()`) throws if called outside a request scope
+ * (e.g., during build, server preboot, or Playwright’s dev server boot).
+ * This helper returns `false` instead of throwing in those contexts.
+ *
+ * @returns Promise<boolean> true if Draft Mode is enabled, else false.
+ */
 async function safeDraftEnabled(): Promise<boolean> {
   try {
     const { isEnabled } = await draftMode()
@@ -31,10 +53,19 @@ async function safeDraftEnabled(): Promise<boolean> {
 }
 
 /**
- * Fetches GraphQL data from Optimizely or returns mock data when enabled.
+ * Low-level GraphQL fetcher for Optimizely, with dev-friendly fallbacks.
  *
- * @template Response - GraphQL response shape
- * @template Variables - GraphQL query variables
+ * Behavior by environment variables:
+ * - `MOCK_OPTIMIZELY=true`: returns local mock data via `getMockResponse`.
+ * - `IS_BUILD=true`: short-circuits with empty data (no network access during SSG).
+ * - `OPTIMIZELY_API_URL` / `OPTIMIZELY_SINGLE_KEY`: required for real requests.
+ * - `preview=true`: sets Basic auth using `OPTIMIZELY_PREVIEW_SECRET` and disables caching.
+ *
+ * @template Response GraphQL data payload shape
+ * @template Variables GraphQL variables shape
+ * @param args GraphQL request + fetch options
+ * @returns GraphQL response plus the raw `Headers` from `fetch`
+ * @throws When required environment variables are missing or the request fails
  */
 export const optimizelyFetch = async <Response, Variables = object>({
   query,
@@ -48,47 +79,34 @@ export const optimizelyFetch = async <Response, Variables = object>({
 > => {
   const isMock = process.env.MOCK_OPTIMIZELY === 'true'
 
-  // 🧪 Return mock response (dev-only)
+  // 🧪 Dev mock path
   if (isMock) {
     const data = getMockResponse<Response>(query, variables)
-    return {
-      data,
-      errors: [],
-      headers: new Headers(),
-    }
+    return { data, errors: [], headers: new Headers() }
   }
 
-  // 🏗️ Skip fetch during static builds
+  // 🏗️ Build-time short-circuit (avoid network)
   if (process.env.IS_BUILD === 'true') {
-    return {
-      data: {} as Response,
-      errors: [],
-      headers: new Headers(),
-    }
+    return { data: {} as Response, errors: [], headers: new Headers() }
   }
 
   const apiUrl = process.env.OPTIMIZELY_API_URL
   const apiKey = process.env.OPTIMIZELY_SINGLE_KEY
-
   if (!apiUrl || !apiKey) {
     throw new Error('Missing OPTIMIZELY_API_URL or OPTIMIZELY_SINGLE_KEY')
   }
 
   const configHeaders = { ...headers }
 
+  // Preview auth (Basic) + disable cache
   if (preview) {
     const previewSecret = process.env.OPTIMIZELY_PREVIEW_SECRET
     if (!previewSecret) {
       if (process.env.NODE_ENV === 'development') {
         const data = getMockResponse<Response>(query, variables)
-        return {
-          data,
-          errors: [],
-          headers: new Headers(),
-        }
-      } else {
-        throw new Error('Missing OPTIMIZELY_PREVIEW_SECRET in preview mode')
+        return { data, errors: [], headers: new Headers() }
       }
+      throw new Error('Missing OPTIMIZELY_PREVIEW_SECRET in preview mode')
     }
     configHeaders.Authorization = `Basic ${previewSecret}`
     cache = 'no-store'
@@ -124,8 +142,18 @@ export const optimizelyFetch = async <Response, Variables = object>({
 }
 
 /**
- * Lightweight GraphQL SDK-style requester.
- * Automatically enables preview mode when Next.js Draft Mode is active.
+ * Tiny SDK-style requester that:
+ *  - Detects Draft Mode safely (using {@link safeDraftEnabled})
+ *  - Forwards through to {@link optimizelyFetch}
+ *
+ * Pass `options.preview` explicitly to override Draft Mode detection.
+ *
+ * @template T Response payload type
+ * @template V Variables type
+ * @param query GraphQL query string
+ * @param variables GraphQL variables
+ * @param options Additional fetch options
+ * @returns Resolved `data` field from the GraphQL response
  */
 const requester = async <T, V>(
   query: string,
@@ -149,8 +177,11 @@ const requester = async <T, V>(
 // ─────────────────────────────────────
 
 /**
- * Local mock-only Optimizely SDK.
- * Replace or extend these queries manually until GraphQL Codegen is restored.
+ * Local, minimal Optimizely SDK.
+ *
+ * These methods intentionally reference placeholder queries (e.g. `'query ... { }'`).
+ * In real integration, swap these for generated SDK calls from GraphQL Codegen.
+ * While mocking (`MOCK_OPTIMIZELY=true`), requests are satisfied by `getMockResponse`.
  */
 export const optimizely = {
   /** Retrieves the StartPage content in preview mode. */
@@ -159,17 +190,12 @@ export const optimizely = {
       {
         StartPage: {
           item: {
-            blocks?: {
-              __typename: string
-              [key: string]: unknown
-            }[]
+            blocks?: { __typename: string; [key: string]: unknown }[]
           }
         }
       },
       typeof variables
-    >('query GetPreviewStartPage { ... }', variables, {
-      preview: true,
-    })
+    >('query GetPreviewStartPage { ... }', variables, { preview: true })
   },
 
   /** Retrieves a single CMS block component by key (Visual Builder preview). */
@@ -180,10 +206,7 @@ export const optimizely = {
     return requester<
       {
         _Component: {
-          item: {
-            __typename: string
-            [key: string]: unknown
-          }
+          item: { __typename: string; [key: string]: unknown }
         }
       },
       typeof variables
@@ -204,10 +227,7 @@ export const optimizely = {
               displayName: string
               nodes: {
                 displaySettings: Record<string, unknown>
-                component: {
-                  __typename: string
-                  [key: string]: unknown
-                }
+                component: { __typename: string; [key: string]: unknown }
                 key: string
               }[]
             }
@@ -228,22 +248,16 @@ export const optimizely = {
       variables,
       options
     )
-    return {
-      CMSPage: { item: null },
-    }
+    return { CMSPage: { item: null } }
   },
 
-  /** Retrieves all CMS pages for static param generation (e.g. ISR). */
+  /** Retrieves all CMS pages for static param generation (e.g., ISR). */
   async AllPages(variables: { pageType: string[] }) {
     return requester<
       {
         _Content: {
           items: {
-            _metadata?: {
-              url?: {
-                default?: string
-              }
-            }
+            _metadata?: { url?: { default?: string } }
           }[]
         }
       },
@@ -258,10 +272,7 @@ export const optimizely = {
         _Content: {
           items: {
             __typename: string
-            _metadata?: {
-              guid: string
-              [key: string]: unknown
-            }
+            _metadata?: { guid: string; [key: string]: unknown }
             [key: string]: unknown
           }[]
         }
@@ -283,14 +294,8 @@ export const optimizely = {
             title: string
             shortDescription?: string
             keywords?: string
-            blocks?: {
-              __typename: string
-              [key: string]: unknown
-            }[]
-            _metadata?: {
-              modified: string
-              [key: string]: unknown
-            }
+            blocks?: { __typename: string; [key: string]: unknown }[]
+            _metadata?: { modified: string; [key: string]: unknown }
             [key: string]: unknown
           } | null
         }
@@ -309,18 +314,12 @@ export const optimizely = {
         SEOExperience: {
           items: {
             __typename: string
-            _metadata?: {
-              version?: string
-              [key: string]: unknown
-            }
+            _metadata?: { version?: string; [key: string]: unknown }
             composition: {
               displayName: string
               nodes: {
                 displaySettings: Record<string, unknown>
-                component: {
-                  __typename: string
-                  [key: string]: unknown
-                }
+                component: { __typename: string; [key: string]: unknown }
                 key: string
               }[]
             }
@@ -340,14 +339,8 @@ export const optimizely = {
       {
         StartPage: {
           items: {
-            blocks?: {
-              __typename: string
-              [key: string]: unknown
-            }[]
-            _metadata?: {
-              version?: string
-              [key: string]: unknown
-            }
+            blocks?: { __typename: string; [key: string]: unknown }[]
+            _metadata?: { version?: string; [key: string]: unknown }
             [key: string]: unknown
           }[]
         }

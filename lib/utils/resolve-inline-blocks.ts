@@ -2,8 +2,36 @@ import { optimizely } from '../optimizely/fetch'
 import type { SafeContent as IContent } from '../optimizely/types/type-utils'
 
 /**
- * Resolves any shared or inline blocks within a CMS page.
- * A "stub" is a block that only includes __typename + _metadata.key.
+ * Resolves inline or shared block stubs into full CMS content blocks.
+ *
+ * A block may arrive from Optimizely in a "stub" form:
+ * ```json
+ * {
+ *   "__typename": "HeroBlock",
+ *   "_metadata": { "key": "guid-123" }
+ * }
+ * ```
+ *
+ * These stubs only include a `__typename` and `_metadata.key`.
+ * This function detects them, fetches the full block data by GUID,
+ * and merges the result with any already-resolved inline blocks.
+ *
+ * Deduplication is applied so the same key is not fetched more than once.
+ *
+ * @param blocks - An array of CMS content blocks (resolved or stubbed).
+ * @returns A promise resolving to a list of fully resolved blocks.
+ *
+ * @example
+ * ```ts
+ * const blocks = await resolveInlineBlocks(page.blocks);
+ * blocks.forEach((block) => {
+ *   switch (block.__typename) {
+ *     case 'HeroBlock':
+ *       // render hero
+ *       break;
+ *   }
+ * });
+ * ```
  */
 export async function resolveInlineBlocks(
   blocks: (IContent | null | undefined)[]

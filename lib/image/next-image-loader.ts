@@ -2,17 +2,31 @@ import cloudinaryLoader from './cloudinary-loader'
 import { getOptimizedImageUrl } from './cdn-image'
 
 /**
- * A universal image loader for Next.js <Image> component.
+ * Smart image loader for Next.js `<Image />`.
  *
- * Automatically detects Cloudinary or relative URLs and delegates transformation:
- * - Cloudinary URLs: Uses Cloudinary transformation parameters.
- * - Relative CMS image paths (e.g. `/globalassets/foo.jpg`): Rewritten for CDN optimization.
- * - External or unsupported URLs are returned unchanged.
+ * Routing rules:
+ * - **Cloudinary URL** → delegates to the Cloudinary loader (adds width/quality transforms).
+ * - **Relative path** (e.g. `/globalassets/foo.jpg`) → rewrites for CDN optimisation (Cloudflare images).
+ * - **Anything else** → passthrough unchanged.
  *
- * @param src - The original image URL.
- * @param width - The desired width of the image.
- * @param quality - Optional image quality setting (defaults handled by loaders).
- * @returns A transformed or passthrough URL appropriate for use with <Image loader />.
+ * Notes:
+ * - Empty/whitespace `src` returns an empty string.
+ * - If `width` is not a positive number (shouldn’t happen with Next), returns the original `src`.
+ *
+ * @example
+ * // Cloudinary
+ * imageLoader({ src: 'https://res.cloudinary.com/demo/image/upload/v1/pic.jpg', width: 800 })
+ *
+ * // Relative CMS asset
+ * imageLoader({ src: '/globalassets/pic.jpg', width: 600, quality: 80 })
+ *
+ * // External passthrough
+ * imageLoader({ src: 'https://example.com/pic.jpg', width: 600 })
+ *
+ * @param src - Original image URL or path.
+ * @param width - Desired output width in pixels (provided by Next).
+ * @param quality - Optional quality hint; loaders decide defaults.
+ * @returns URL string suitable for Next `<Image loader={imageLoader} />`.
  */
 export default function imageLoader({
   src,
@@ -23,18 +37,24 @@ export default function imageLoader({
   width: number
   quality?: number
 }): string {
-  if (!src) return ''
+  const cleanSrc = (src ?? '').trim()
+  if (!cleanSrc) return ''
 
-  // Handle Cloudinary-hosted assets
-  if (src.startsWith('https://res.cloudinary.com')) {
-    return cloudinaryLoader({ src, width, quality })
+  // Sanity guard — Next should always pass a positive width.
+  if (!(typeof width === 'number' && isFinite(width) && width > 0)) {
+    return cleanSrc
   }
 
-  // Handle relative CMS assets via CDN
-  if (src.startsWith('/')) {
-    return getOptimizedImageUrl(src, { width, quality })
+  // Cloudinary-hosted assets
+  if (cleanSrc.startsWith('https://res.cloudinary.com')) {
+    return cloudinaryLoader({ src: cleanSrc, width, quality })
   }
 
-  // External or unsupported asset - return unchanged
-  return src
+  // Relative CMS assets via CDN (Cloudflare Images)
+  if (cleanSrc.startsWith('/')) {
+    return getOptimizedImageUrl(cleanSrc, { width, quality })
+  }
+
+  // External/unsupported → passthrough
+  return cleanSrc
 }

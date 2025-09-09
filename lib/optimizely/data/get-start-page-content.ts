@@ -2,25 +2,26 @@ import { draftMode } from 'next/headers'
 import { optimizely } from '../fetch'
 
 /**
- * Retrieves the StartPage content from the Optimizely CMS.
+ * Retrieves the StartPage content from Optimizely CMS.
  *
- * Automatically switches between draft (preview) and published versions
- * depending on whether Next.js Draft Mode is currently enabled.
- *
- * - If in draft mode AND a version is supplied, fetches the preview version.
- * - Otherwise, fetches the published version(s) of the StartPage content.
+ * Switches between **draft (preview)** and **published** modes:
+ * - **Draft Mode**: If `draftMode` is enabled *and* a `version` is provided, fetches that specific preview version.
+ * - **Published Mode**: If draft mode is disabled *or* no `version` is supplied, fetches the published StartPage versions.
  *
  * This method supports local mocking when `MOCK_OPTIMIZELY=true` is set.
  *
- * @param params - The content query parameters
- * @param params.locales - List of requested locales (e.g., ['en'])
- * @param params.version - Optional preview version key (required in draft mode)
- * @returns A Promise resolving to the StartPage content result
+ * @param params - Query parameters
+ * @param params.locales - Locales to fetch (e.g., `['en']`).
+ * @param params.version - Optional version identifier (required for draft/preview fetch).
+ * @returns A Promise resolving to the StartPage content result.
  *
  * @example
- * ```ts
- * const content = await getStartPageContent({ locales: ['en'], version: 'v1' });
- * ```
+ * // Draft mode + preview version
+ * const preview = await getStartPageContent({ locales: ['en'], version: 'v1' });
+ *
+ * @example
+ * // Published mode
+ * const published = await getStartPageContent({ locales: ['en'] });
  */
 export async function getStartPageContent({
   locales,

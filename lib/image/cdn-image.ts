@@ -1,17 +1,23 @@
 /**
- * Rewrites a relative Optimizely image path to use Cloudflare CDN transforms.
+ * Utility: Rewrites an Optimizely-relative image path to use Cloudflare CDN transforms.
  *
- * Prepends the Cloudflare image transformation directive to an image URL
- * if it's a relative path. This improves performance by optimising
- * image delivery via width and quality settings.
+ * If the `src` begins with a leading `/` (e.g. `/globalassets/...`), it is rewritten
+ * to include Cloudflare’s image optimization directives. This ensures faster delivery
+ * with resizing and quality settings applied at the CDN layer.
  *
- * Example:
- *   getOptimizedImageUrl('/globalassets/image.jpg', { width: 600 })
- *   ➜ /cdn-cgi/image/width=600,quality=75/globalassets/image.jpg
+ * Cloudflare will automatically cache and serve the optimized image.
  *
- * @param src - A relative image path from Optimizely (e.g., `/globalassets/img.jpg`).
- * @param opts - Optional image settings: width and quality.
- * @returns A transformed URL string, or the original if not eligible.
+ * @example
+ * ```ts
+ * getOptimizedImageUrl('/globalassets/image.jpg', { width: 600 })
+ * // → "/cdn-cgi/image/width=600,quality=75/globalassets/image.jpg"
+ * ```
+ *
+ * @param src - Image path from Optimizely (e.g. `/globalassets/img.jpg`).
+ * @param opts - Optional transform options:
+ *   - `width`   Target width in pixels (default: 800)
+ *   - `quality` Compression quality (default: 75)
+ * @returns Optimized URL string, or original `src` if not eligible.
  */
 export function getOptimizedImageUrl(
   src: string,
