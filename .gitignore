@@ -21,9 +21,11 @@ test-results/
 *.log
 .DS_Store
 
-# Env files (always keep secrets local only)
+# Env files (keep .env.example tracked)
 .env
+.env.local
 .env.*.local
+.env.*
 
 # Editor configs & caches
 .vscode/
