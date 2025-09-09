@@ -15,10 +15,11 @@ export const metadata: Metadata = {
 
 /**
  * Renders the 404 "Not Found" error page.
+ *
  * This page is displayed when no CMS content is found or a route fails to resolve.
  * Includes a visually prominent heading, descriptive message, and a CTA back to homepage.
  *
- * @returns A styled <main> element representing the 404 UI.
+ * @returns {ReactElement} A styled <main> element representing the 404 UI.
  */
 export default function NotFound() {
   return (

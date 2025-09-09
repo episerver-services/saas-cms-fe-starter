@@ -61,22 +61,17 @@ describe('draft preview page (final behavior)', () => {
     expect(getPreviewStartPageMock).not.toHaveBeenCalled()
   })
 
-  it('returns fallback UI when CMS returns no (truthy) blocks', async () => {
+  it('throws notFound() when CMS returns no (truthy) blocks', async () => {
     checkDraftModeMock.mockResolvedValue(true)
     getPreviewStartPageMock.mockResolvedValue({
       StartPage: { item: { blocks: [null, undefined, false] } },
     })
 
-    const el = await CmsPage({ params: params('v2', 'any') } as any)
-    const html = JSON.stringify(el)
+    await expect(
+      CmsPage({ params: params('v2', 'any') } as any)
+    ).rejects.toThrow('NEXT_NOT_FOUND')
 
-    // Fallback present by its props
-    expect(html).toContain('"title":"Failed to load draft content"')
-    expect(html).toMatch(/"message":".*An error occurred/i)
-
-    // Ensure mapper props aren’t present
-    expect(html).not.toContain('"preview":true')
-    expect(html).not.toContain('"blocks":')
+    expect(notFoundMock).toHaveBeenCalledTimes(1)
   })
 
   it('renders OnPageEdit + Mapper when blocks exist and builds currentRoute correctly', async () => {

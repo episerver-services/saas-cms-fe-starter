@@ -1,19 +1,27 @@
 import ContentAreaMapper from '@/app/components/content-area/mapper'
 import FallbackErrorUI from '@/app/components/errors/fallback-error-ui'
 import { optimizely } from '@/lib/optimizely/fetch'
-import { mapPathWithoutLocale } from '@/lib/optimizely/utils/language'
+import { LOCALES, mapPathWithoutLocale } from '@/lib/optimizely/utils/language'
 import { generateAlternates } from '@/lib/utils/metadata'
 import { resolveSlugAndLocale } from '@/lib/utils/routing'
-import { Metadata } from 'next'
+import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 
 /**
- * Type guard to check if a CMS page object includes `_metadata.modified`.
- *
- * @param page - Unknown object to check.
- * @returns `true` if object contains a `_metadata.modified` string.
+ * Narrow type for a CMS page item we care about on published routes.
+ */
+type CMSPageItem = {
+  title: string
+  shortDescription?: string
+  keywords?: string
+  blocks?: { __typename: string; [key: string]: unknown }[]
+  _metadata?: { modified?: string; [key: string]: unknown }
+}
+
+/**
+ * Runtime type guard to ensure the page has `_metadata.modified`.
  */
 function hasModifiedMetadata(
   page: unknown
@@ -26,28 +34,12 @@ function hasModifiedMetadata(
   )
 }
 
-type CMSPageItem = {
-  title: string
-  shortDescription?: string
-  keywords?: string
-  blocks?: {
-    __typename: string
-    [key: string]: unknown
-  }[]
-  _metadata?: {
-    modified?: string
-    [key: string]: unknown
-  }
-}
-
 /**
- * Generates SEO metadata for a CMS page at runtime.
+ * Build dynamic SEO metadata for published pages.
  *
- * Fetches title, description, keywords, and alternate URLs from the CMS.
- * Handles fallback cases for build-time or mock environments.
- *
- * @param props - Route props containing dynamic `locale` and optional `slug`.
- * @returns A `Metadata` object for use with Next.js head rendering.
+ * - Uses `resolveSlugAndLocale` to normalize incoming params.
+ * - Skips CMS fetch during build or mock mode (safe fallback).
+ * - Uses draftMode only to decide preview vs published for metadata fetch.
  */
 export async function generateMetadata({
   params,
@@ -64,60 +56,43 @@ export async function generateMetadata({
     console.warn(
       '[generateMetadata] Using fallback due to IS_BUILD or MOCK_OPTIMIZELY'
     )
-    return {
-      title: 'Optimizely Page',
-      description: '',
-    }
+    return { title: 'Optimizely Page', description: '' }
   }
 
   try {
-    const { isEnabled: isDraftModeEnabled } = await draftMode()
-    console.log('[CMS Page] Draft mode?', isDraftModeEnabled)
-
+    const { isEnabled } = await draftMode()
     const pageData = await optimizely.getPageByURL(
-      {
-        locales: [localeCode],
-        slug: formattedSlug,
-      },
-      {
-        preview: isDraftModeEnabled,
-      }
+      { locales: [localeCode], slug: formattedSlug },
+      { preview: isEnabled }
     )
 
     const item = pageData?.CMSPage?.item
-
     if (!item || typeof item !== 'object' || !('title' in item)) {
-      console.warn('[generateMetadata] No valid CMSPage item found')
-      return {
-        title: `Optimizely Page${slug ? ` - ${slug.join('/')}` : ''}`,
-      }
+      return { title: `Optimizely Page${slug ? ` - ${slug.join('/')}` : ''}` }
     }
 
     const page = item as CMSPageItem
-
     return {
       title: page.title,
       description: page.shortDescription || '',
       keywords: page.keywords ?? '',
-      alternates: generateAlternates(locale, formattedSlug),
+      alternates: generateAlternates(localeCode, formattedSlug),
     }
   } catch (error) {
     console.error('generateMetadata fallback:', error)
-    return {
-      title: `Optimizely Page${slug ? ` - ${slug.join('/')}` : ''}`,
-    }
+    return { title: `Optimizely Page${slug ? ` - ${slug.join('/')}` : ''}` }
   }
 }
 
 /**
- * Generates dynamic route parameters for all CMS pages.
+ * Provide route params for pre-rendering.
  *
- * Used by Next.js to pre-render paths for static generation or ISR.
- * Skips execution in build or mock environments.
- *
- * @returns An array of `{ slug: string[] }` route params.
+ * Today: `LOCALES = ['en']` → single-locale emission.
+ * Tomorrow: add locales to `LOCALES` and this automatically expands.
  */
-export async function generateStaticParams() {
+export async function generateStaticParams(): Promise<
+  Array<{ locale: string; slug?: string[] }>
+> {
   if (
     process.env.IS_BUILD === 'true' ||
     process.env.MOCK_OPTIMIZELY === 'true'
@@ -130,26 +105,24 @@ export async function generateStaticParams() {
 
   try {
     const pageTypes = ['CMSPage']
-    const pathsResp = await optimizely.AllPages?.({ pageType: pageTypes })
+    const resp = await optimizely.AllPages?.({ pageType: pageTypes })
+    const items = resp?._Content?.items ?? []
 
-    const paths = pathsResp?._Content?.items ?? []
+    const unique = new Set<string>()
+    for (const it of items) {
+      const url = it?._metadata?.url?.default
+      if (typeof url === 'string') unique.add(mapPathWithoutLocale(url))
+    }
 
-    const uniquePaths = new Set<string>()
-    paths.forEach((path) => {
-      const metadata = path?._metadata
-      if (
-        metadata &&
-        typeof metadata === 'object' &&
-        'url' in metadata &&
-        typeof metadata.url?.default === 'string'
-      ) {
-        uniquePaths.add(mapPathWithoutLocale(metadata.url.default))
+    const slugs = Array.from(unique).map((s) => s.split('/').filter(Boolean))
+
+    const params: Array<{ locale: string; slug?: string[] }> = []
+    for (const loc of LOCALES) {
+      for (const parts of slugs) {
+        params.push({ locale: loc, slug: parts.length ? parts : undefined })
       }
-    })
-
-    return Array.from(uniquePaths).map((slug) => ({
-      slug: slug.split('/').filter(Boolean),
-    }))
+    }
+    return params
   } catch (e) {
     console.error('generateStaticParams fallback:', e)
     return []
@@ -157,14 +130,11 @@ export async function generateStaticParams() {
 }
 
 /**
- * Renders a published CMS page (non-draft).
+ * Published (non-draft) page route.
  *
- * This is the main route handler for production content pages.
- * It ignores draft mode and always fetches published content by slug and locale.
- * Falls back to error or 404 if content is missing or malformed.
- *
- * @param props - Async route params containing locale and optional slug array.
- * @returns A full CMS page layout, or fallback/404 content.
+ * - Ignores draft mode and always requests published content.
+ * - Renders mapped blocks; 404s on missing/invalid pages.
+ * - Uses Suspense fallback while the block tree resolves.
  */
 export default async function CmsPage({
   params,
@@ -177,20 +147,11 @@ export default async function CmsPage({
   let page: CMSPageItem | null = null
   try {
     const pageData = await optimizely.getPageByURL(
-      {
-        locales: [localeCode],
-        slug: formattedSlug,
-      },
-      {
-        preview: false,
-      }
+      { locales: [localeCode], slug: formattedSlug },
+      { preview: false }
     )
-
     const item = pageData?.CMSPage?.item
-
-    if (item && typeof item === 'object') {
-      page = item as CMSPageItem
-    }
+    if (item && typeof item === 'object') page = item as CMSPageItem
   } catch (err) {
     return (
       <FallbackErrorUI
@@ -202,9 +163,7 @@ export default async function CmsPage({
     )
   }
 
-  if (!page || !hasModifiedMetadata(page)) {
-    return notFound()
-  }
+  if (!page || !hasModifiedMetadata(page)) return notFound()
 
   const blocks = (page.blocks ?? []).filter(Boolean)
 
@@ -215,4 +174,5 @@ export default async function CmsPage({
   )
 }
 
+/** Incremental Static Regeneration window (seconds). */
 export const revalidate = 60

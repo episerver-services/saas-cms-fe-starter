@@ -14,16 +14,15 @@ export const dynamic = 'force-dynamic'
 /**
  * Visual Builder draft preview route for rendering unpublished CMS content.
  *
- * This route supports Optimizely SaaS CMS Visual Builder editing by allowing preview access
- * to specific page versions. It is accessed through URLs like:
+ * Supports Optimizely SaaS CMS Visual Builder editing by allowing preview access
+ * to specific page versions via `/draft/{version}/{...slug}`.
  *
- * `/draft/{version}/{...slug}`
+ * If draft mode is not permitted, this will trigger Next.js 404 (`notFound()`).
  *
- * ### Params:
- * @param params.version - A unique draft version ID (GUID) from Visual Builder
- * @param params.slug - Optional slug path for the previewed page (e.g., `about-us`)
- *
- * @returns React layout with CMS-rendered blocks, or fallback UI if an error occurs.
+ * @param params - Route params provided by Next.js
+ * @param params.version - The Visual Builder draft version (GUID)
+ * @param params.slug - Optional slug path for the previewed page (e.g. `about-us`)
+ * @returns A React tree for the draft page or a fallback error UI when fetching fails
  */
 export default async function CmsPage({
   params,
@@ -35,28 +34,17 @@ export default async function CmsPage({
   const isDraftModeEnabled = await checkDraftMode()
   if (!isDraftModeEnabled) return notFound()
 
+  let pageResponse:
+    | {
+        StartPage?: { item?: { blocks?: unknown[] | null } | null }
+      }
+    | undefined
+
   try {
-    const pageResponse = await optimizely.GetPreviewStartPage({
+    pageResponse = await optimizely.GetPreviewStartPage({
       version,
-      locales: [], // No need to pass locales in your reset state
+      locales: [], // no locales required in this starter
     })
-
-    const page = pageResponse?.StartPage?.item
-    const blocks = (page?.blocks ?? []).filter(Boolean)
-
-    if (!blocks.length) return notFound()
-
-    return (
-      <div className="container py-10" data-epi-edit="blocks">
-        {process.env.MOCK_OPTIMIZELY !== 'true' && (
-          <OnPageEdit
-            version={version}
-            currentRoute={`/draft/${version}/${slug}`}
-          />
-        )}
-        <ContentAreaMapper blocks={blocks} preview />
-      </div>
-    )
   } catch (err) {
     return (
       <FallbackErrorUI
@@ -67,4 +55,21 @@ export default async function CmsPage({
       />
     )
   }
+
+  const page = pageResponse?.StartPage?.item
+  const blocks = (page?.blocks ?? []).filter(Boolean)
+
+  if (!blocks.length) return notFound()
+
+  return (
+    <div className="container py-10" data-epi-edit="blocks">
+      {process.env.MOCK_OPTIMIZELY !== 'true' && (
+        <OnPageEdit
+          version={version}
+          currentRoute={`/draft/${version}/${slug}`}
+        />
+      )}
+      <ContentAreaMapper blocks={blocks} preview />
+    </div>
+  )
 }
