@@ -2,7 +2,7 @@
 
 This document defines conventions and expectations for contributors working on the client FE repository. These standards help ensure a consistent, maintainable, and accessible codebase.
 
-_Last updated: 01 September 2025_
+_Last updated: **30 October 2025**_
 
 ---
 

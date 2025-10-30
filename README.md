@@ -10,7 +10,8 @@ It implements layout-aware rendering from CMS content, supports preview mode, an
 
 • ✅ GraphQL client + codegen setup using Optimizely schema  
 • ✅ Layout-aware CMS rendering (blocks, pages, homepage, VB)  
-• ✅ Draft mode support for unpublished content  
+• ✅ Draft mode support for unpublished content (with `EditModeProvider` context)  
+• ✅ Visual Builder (VB) communication bridge + DOM observer  
 • ✅ Component mocking for Storybook-first development  
 • 🧪 Unit testing with Jest + React Testing Library  
 • 🧪 E2E browser testing via Playwright  
@@ -126,8 +127,8 @@ Unit test coverage includes:
 - `lib/image/*` (Cloudinary, CDN, Next.js image loaders)  
 - `lib/optimizely/fetch.ts` (GraphQL requester + error handling)  
 - `lib/utils/*` (factories, draft mode, metadata, language, inline block resolution, type guards, misc helpers)  
-- `app/components/draft/*` (Draft mode homepage, actions, CMS page, on-page-edit)  
-- `app/components/visual-builder/*` (wrapper for layout-aware rendering)
+- `app/components/draft/*` (Draft mode homepage, actions, CMS page, on-page-edit, EditModeProvider)  
+- `app/components/visual-builder/*` (wrapper for layout-aware rendering + VB communication injector)
 
 Run **BDD tests** with Cucumber:
 
@@ -198,20 +199,21 @@ docker run -p 3000:3000 --env-file .env.local saas-cms-fe-starter
 
 ✅ Layout-aware routing and block rendering  
 ✅ CMS integration using GraphQL schema and SDK  
-✅ Visual Builder fallback support (via experience wrappers)  
+✅ Visual Builder fallback support (via experience wrappers + DOM observer)  
 ✅ Draft mode for unpublished pages and blocks  
-✅ Mock-driven development support via Storybook
+✅ Mock-driven development support via Storybook  
+✅ Edit mode context (`EditModeProvider`) integrated across draft routes  
 
 ---
 ## 🔮 What's Next
 
 Here are some suggested follow‑up tasks to evolve this starter into a fully production‑ready head:
 
-- 🎨 **CMS Theming & Design System** – Introduce a component library (Chakra, Radix, custom design system).
-- 🧭 **Navigation Management** – Map CMS menus and enable multi‑locale navigation.
-- 📝 **Visual Builder Expansion** – Add full Visual Builder block mapping with live preview support.
-- 🔍 **SEO Enhancements** – Rich metadata, schema.org, sitemap automation, OpenGraph defaults.
-- 📈 **Observability** – Integrate Sentry/LogRocket for error + performance tracking.
-- ⚙️ **CI/CD** – GitHub Actions or Vercel pipelines with lint/test/build checks.
-- 🌍 **Multi‑locale Support** – Add i18n routing, content fallbacks, and language switcher.
-- 🔐 **Auth & Personalisation** – Integrate Opti ID, feature flags, and AB testing.
+- 🎨 **CMS Theming & Design System** – Introduce a component library (Chakra, Radix, or custom).  
+- 🧭 **Navigation Management** – Map CMS menus and enable multi‑locale navigation.  
+- 📝 **Visual Builder Expansion** – Add full Visual Builder block mapping with live preview support.  
+- 🔍 **SEO Enhancements** – Rich metadata, schema.org, sitemap automation, OpenGraph defaults.  
+- 📈 **Observability** – Integrate Sentry/LogRocket for error + performance tracking.  
+- ⚙️ **CI/CD** – GitHub Actions or Vercel pipelines with lint/test/build checks.  
+- 🌍 **Multi‑locale Support** – Add i18n routing, content fallbacks, and language switcher.  
+- 🔐 **Auth & Personalisation** – Integrate Opti ID, feature flags, and AB testing.  

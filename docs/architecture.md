@@ -1,8 +1,9 @@
 # 🏗️ Project Architecture: Optimizely SaaS CMS FE Template
 
-This document outlines the architectural design of the custom front-end built for Optimizely SaaS CMS. It explains how content flows from the CMS through the GraphQL layer into page rendering and how the app supports features like preview mode, Visual Builder readiness, and static revalidation.
+This document outlines the architectural design of the custom front-end built for Optimizely SaaS CMS.  
+It explains how content flows from the CMS through the GraphQL layer into page rendering and how the app supports features like preview mode, Visual Builder readiness, and static revalidation.
 
-_Last updated: 01 September 2025_
+_Last updated: **30 October 2025**_
 
 ---
 
@@ -11,9 +12,9 @@ _Last updated: 01 September 2025_
 - **Framework:** Next.js 15 (App Router)
 - **Rendering:** Static + Server-Side Rendering (ISR/SSR)
 - **CMS:** Optimizely SaaS CMS (Delivery API v2, GraphQL)
-- **Auth:** Bearer Token via env config
-- **Content Delivery:** CDN-optimized, supports image transformation
-- **Preview:** Next.js Draft Mode with URL toggling
+- **Auth:** Delivery Key (published) and Basic Auth (preview)
+- **Content Delivery:** CDN-optimized with built-in image transformation
+- **Preview:** Next.js Draft Mode + Visual Builder routes
 - **Testing:** Jest, Playwright, Cucumber
 - **Build:** Docker-ready with CI/CD pipelines via GitHub Actions
 
@@ -21,13 +22,11 @@ _Last updated: 01 September 2025_
 
 ## 📦 Data Flow
 
-1. **Request hits** `[locale]/[slug]/page.tsx`
-2. **Content fetch:** Uses temporary SDK methods wrapping mock GraphQL calls
-   - Tries `CMSPage` first via `GetAllPagesVersionByURL`
-   - Fallbacks to `SEOExperience` (Visual Builder)
-3. **Draft mode check:** Uses `draftMode().enable()` to show unpublished content
-4. **Component rendering:** Uses `ContentAreaMapper` with `__typename`-driven factory
-5. **Slot recursion:** Nested slots rendered via recursive helper
+1. **Request hits** `[locale]/[[...slug]]/page.tsx`
+2. **Content fetch:** `optimizely.getPageByURL()` for published pages or `optimizely.GetPreviewStartPage()` for draft mode
+3. **Draft mode check:** Safe detection via `checkDraftMode()`
+4. **Component rendering:** `ContentAreaMapper` handles both CMS and Visual Builder blocks
+5. **Slot recursion:** Nested content areas rendered recursively via `renderNestedSlots()`
 
 ---
 
@@ -35,61 +34,64 @@ _Last updated: 01 September 2025_
 
 ### Delivery API
 
-- GraphQL endpoint accessed via `.env` bearer token
-- SDK is stubbed for now; future integration will use GraphQL Codegen (`pnpm codegen`)
-- Live schema fragments and query generation to follow
+- Accesses GraphQL via environment-configured Delivery Key
+- Preview requests use Basic Auth from `OPTIMIZELY_PREVIEW_SECRET`
+- Wrapper: `/lib/optimizely/fetch.ts` handles mocks, errors, and caching
+- GraphQL Codegen optional for schema-typed queries
 
 ### Content Types
 
-- `CMSPage` → Traditional structured pages
-- `SEOExperience` → Visual Builder layouts (composition-based)
+- `CMSPage` → Structured page content
+- `Experience` → Visual Builder composition-based pages
 
 ---
 
 ## ⚙️ Draft Mode Support
 
-- Drafts are toggled via `/draft?url=/target`
-- Internally calls `draftMode().enable()` in API route
-- `page.tsx` uses `await draftMode()` to branch rendering
-- Supports both `CMSPage` and `SEOExperience` previews
+- Draft mode routes live under `/draft/[version]/[[...slug]]`
+- API endpoints `/api/preview` and `/api/preview/disable` toggle state
+- Safe helper `checkDraftMode()` wraps Next.js `draftMode()`
+- Fully supports both `CMSPage` and `Experience` preview flows
 
 ---
 
 ## 🧩 Visual Builder Compatibility
 
-- **SafeVisualBuilderExperience** type guards composition shape
-- `VisualBuilderExperienceWrapper` handles rendering in draft mode
-- `displaySettings`, `component`, and `slots` mapped dynamically
-- Layout-aware rendering logic partially implemented; awaits live CMS schema and fragments
+- `ContentAreaMapper` supports Visual Builder compositions (`isVisualBuilder`)
+- `OnPageEdit` listens for `optimizely:cms:contentSaved` → refreshes or navigates to new version
+- `data-epi-block-id` and `data-epi-edit` attributes enable Visual Builder block highlighting
+- Communication injector loaded dynamically via `<Script>` in `SharedPageLayout`
+- `useIsInsideVB` hook detects iframe context for VB-only logic
 
 ---
 
 ## 🛠️ Static Rendering & Revalidation
 
-- Static generation (`generateStaticParams`) temporarily disabled
-- All routes fallback to SSR due to dynamic mocks
-- `/api/revalidate` available for future CMS-triggered revalidation
+- `generateStaticParams` enabled for published pages (empty fallback in mock mode)
+- Cache tagging (`next: { tags: ['optimizely-content'] }`) enables ISR revalidation
+- `/api/revalidate` route optional for CMS-triggered refresh
 
 ---
 
 ## 🧪 Testing Overview
 
-- **Unit tests:** Jest + RTL for key rendering logic
-- **BDD:** Gherkin/Cucumber via `features/*.feature`
-- **E2E:** Playwright tests simulate full browser behaviour
+- **Unit tests:** Jest + RTL for render logic (`ContentAreaMapper`, `draft/page`, etc.)
+- **BDD:** Gherkin/Cucumber for future integration
+- **E2E:** Playwright for browser-level testing of preview and publish flows
 
 ---
 
 ## 📂 Current State
 
-- ✅ Mock content rendering functional via local adapters
-- ✅ Visual Builder draft rendering stub in place
-- ✅ All key routes scaffolded using App Router
-- 🔄 SDK and type-safe queries to be integrated from CMS GraphQL schema
-- 🔲 CMS block/component mapping and design system integration in progress
+- ✅ Mock + live fetch hybrid layer stable
+- ✅ Visual Builder draft rendering functional
+- ✅ Draft mode routes and event handling in place
+- 🔄 Optional GraphQL schema typing via Codegen
+- 🔲 CMS block/component mapping for design system ongoing
 
 ---
 
 ## 📌 Summary
 
-This architecture is designed to be scalable, maintainable, and CMS-agnostic enough to adapt to Optimizely’s evolving Visual Builder features. It strikes a balance between flexible content modelling and rigorous performance/accessibility controls.
+This architecture is scalable, maintainable, and fully Visual Builder–ready.  
+It balances flexible content modelling, clean client/server boundaries, and zero-cost Visual Builder integration for editors.

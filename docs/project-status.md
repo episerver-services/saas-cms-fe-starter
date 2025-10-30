@@ -7,7 +7,7 @@ This file tracks the current implementation progress of the custom frontend temp
 🔲 = Not Started  
 ❌ = Not in current scope
 
-_Last updated: 09 September 2025_
+_Last updated: 30 October 2025_
 
 ---
 
@@ -26,14 +26,14 @@ _Last updated: 09 September 2025_
 
 ## 📦 Phase 2: CMS Integration (Headless Foundation)
 
-| Task                               | Status | Notes                                                           |
-| ---------------------------------- | ------ | --------------------------------------------------------------- |
-| GraphQL API connection             | 🔲     | Optimizely CMS disconnected — integration pending, fully tested |
-| SDK setup with graphql-codegen     | 🔲     | graphql-codegen removed; no generated SDK in use                |
-| Content ID config (home, layout)   | 🔲     | CMS-driven layout/homepage config removed                       |
-| Preview mode support (draft route) | ✅     | Draft mode routes implemented and functioning with mock data    |
-| Mock preview route (`/draft/...`)  | ✅     | Supports local dev without CMS connection                       |
-| Fallback & error handling          | ✅     | `not-found.tsx` still handles unresolved routes cleanly         |
+| Task                               | Status | Notes                                                                 |
+| ---------------------------------- | ------ | --------------------------------------------------------------------- |
+| GraphQL API connection             | 🔲     | Optimizely CMS disconnected — integration pending, fully tested       |
+| SDK setup with graphql-codegen     | 🔲     | graphql-codegen removed; no generated SDK in use                      |
+| Content ID config (home, layout)   | 🔲     | CMS-driven layout/homepage config removed                             |
+| Preview mode support (draft route) | ✅     | Draft mode routes implemented and functioning with mock data + VB bridge |
+| Mock preview route (`/draft/...`)  | ✅     | Supports local dev without CMS connection                             |
+| Fallback & error handling          | ✅     | `not-found.tsx` still handles unresolved routes cleanly               |
 
 ---
 
@@ -45,8 +45,8 @@ _Last updated: 09 September 2025_
 | Catch-all content renderer           | ✅     | Content renderer stripped back; fallback logic implemented                                      |
 | Component factory mapper             | ✅     | Draft/published page rendering active with Suspense + error fallback                            |
 | Slot renderer for named areas        | ✅     | Block-to-component mapping via `ContentAreaMapper`                                              |
-| ID resolution (inline/shared blocks) | 🔄     | No Visual Builder or GraphQL runtime guards present, ready with placeholders + tested utilities |
-| Rich text and media component base   | 🔄     | Placeholder and Storybook setup added; CMS-driven components missing                            |
+| ID resolution (inline/shared blocks) | 🔄     | Visual Builder guard placeholders added; DOM mutation observer integrated                       |
+| Rich text and media component base   | 🔄     | Placeholder and Storybook setup added; CMS-driven components pending                            |
 
 ---
 
@@ -58,6 +58,7 @@ _Last updated: 09 September 2025_
 | CDN-based image transformation   | ✅     | `cdn-image`, `cloudinary-loader`, and `next-image-loader` have full unit tests |
 | Core Web Vitals setup (LCP, INP) | ✅     | `web-vitals` installed; `VitalsInit` placeholder exists, but is unused         |
 | Real-user monitoring/analytics   | ❌     | No RUM or analytics tooling (Sentry, GA4, LogRocket, etc.) configured          |
+| VB communication script loading  | ✅     | `communicationinjector.js` now lazy-loaded only when in edit/preview mode      |
 
 ---
 
@@ -67,7 +68,7 @@ _Last updated: 09 September 2025_
 | -------------------------- | ------ | ------------------------------------------------------------------- |
 | Metadata from CMS          | 🔄     | Metadata scaffolding present; CMS integration pending               |
 | Accessibility baseline     | 🔄     | Placeholder structure OK; skip links in place; no WCAG audit yet    |
-| Skip links, ARIA audit     | ✅     | Skip link implemented in `layout.tsx`; other checks not yet applied |
+| Skip links, ARIA audit     | ✅⭐   | Skip link implemented; ARIA + edit-mode context validated           |
 | robots.txt / sitemap setup | ✅     | Sitemap and `robots.txt` routes added; static only for now          |
 
 ---
@@ -91,19 +92,20 @@ _Last updated: 09 September 2025_
 | Visual Builder support planned       | ✅     | VB now in scope — core infrastructure and preview mode supported     |
 | Experience content query (GraphQL)   | ✅     | `_Experience` and preview mode supported via VisualBuilder route     |
 | Visual block component compatibility | 🔄     | Component mapping in progress; partial support for dynamic rendering |
-| Layout awareness and slot mapping    | 🔄     | Layout-aware rendering started; slot renderer partially implemented  |
+| Layout awareness and slot mapping    | ✅     | Layout-aware rendering active; VB slot renderer working correctly    |
 | Safe guards for Experience types     | ✅     | `SafeVisualBuilderExperience` types and guards fully implemented     |
 
 ---
 
 ## 📁 Phase 8: Docs & Developer Experience
 
-| Task                    | Status | Notes                                              |
-| ----------------------- | ------ | -------------------------------------------------- |
-| Markdown documentation  | ✅     | All internal guides in `/docs` or README           |
-| Code comments + JSDoc   | ✅     | Function-level JSDoc added throughout key files    |
-| Dev commands (scripts)  | ✅     | Clean, test, build, preview all covered via `pnpm` |
-| DX setup (editorconfig) | ✅     | Formatting and linting enforced across team setups |
+| Task                    | Status | Notes                                                |
+| ----------------------- | ------ | ---------------------------------------------------- |
+| Markdown documentation  | ✅     | All internal guides in `/docs` or README             |
+| Code comments + JSDoc   | ✅     | Function-level JSDoc added throughout key files      |
+| Dev commands (scripts)  | ✅     | Clean, test, build, preview all covered via `pnpm`   |
+| DX setup (editorconfig) | ✅     | Formatting and linting enforced across team setups   |
+| Monorepo + deployment docs | ✅   | Monorepo + hosting setup finalized (Vercel/Docker)   |
 
 ---
 

@@ -1,74 +1,74 @@
 # 🚀 Deployment Notes — SaaS CMS FE Starter (Next.js 15)
 
-This document outlines **deployment options, defaults, and gotchas** for this starter.
-Use it as a baseline, then tailor per-environment.
+This document outlines **deployment options, defaults, and gotchas** for the Optimizely SaaS CMS FE Starter.  
+Use it as a baseline, then tailor per environment.
 
-_Last updated: 09 September 2025_
+_Last updated: **30 October 2025**_
 
 ---
 
 ## TL;DR (Recommended Paths)
 
 - **Vercel (default choice)** — zero-config builds, ISR, preview deployments from PRs, built-in Next.js support.
-- **Docker + Cloud Run / ECS / Azure Web Apps** — reproducible builds, good when infra is standardized on a cloud.
+- **Docker + Cloud Run / ECS / Azure Web Apps** — reproducible builds; ideal when infra is standardized on a cloud.
 - **Netlify / Amplify** — also fine; just ensure Next 15 + edge/runtime flags are set appropriately.
 
-> Decision rule of thumb:
-> - Need the **fastest** path + **preview envs**? → **Vercel**  
-> - Need **centralized Docker** and cloud policies? → **Docker + Cloud**  
-> - Need tight integration with existing platform? → Netlify/Amplify/etc.
+> **Decision rule of thumb**  
+> - Need the **fastest** path + **preview envs** → **Vercel**  
+> - Need **centralized Docker** and cloud policies → **Docker + Cloud**  
+> - Need tight integration with existing platform → Netlify / Amplify / etc.
 
 ---
 
 ## Core Requirements (All Targets)
 
-- **Node**: 18.x or 20.x
-- **Env vars** (at minimum):
+- **Node:** 18 or 20 LTS  
+- **Env vars (required):**
   - `OPTIMIZELY_API_URL`
   - `OPTIMIZELY_SINGLE_KEY`
   - `OPTIMIZELY_PREVIEW_SECRET`
   - `OPTIMIZELY_REVALIDATE_SECRET` (if using on-demand ISR)
   - `NEXT_PUBLIC_CMS_URL`
-  - For local/mocks: `NEXT_PUBLIC_MOCK_OPTIMIZELY`
-- **Build**: `pnpm install && pnpm build`
-- **Start**: `pnpm start` (or platform-equivalent)
-- **Cache/ISR**: ensure the platform **supports Next.js ISR** and **request header passthrough** for draft/preview mode.
+  - `NEXT_PUBLIC_MOCK_OPTIMIZELY` (for local/mocks)
+- **Build:** `pnpm install && pnpm build`
+- **Start:** `pnpm start` (or platform equivalent)
+- **Cache / ISR:** ensure the platform supports **Next ISR** and request-header passthrough for draft/preview mode.
 
 ---
 
 ## Vercel
 
 ### Project Settings
-- **Framework Preset**: Next.js
-- **Build Command**: `pnpm build`
-- **Install Command**: `pnpm install --frozen-lockfile`
-- **Output**: Auto (Next.js)
-- **Env Variables**: add all required keys above in **Project → Settings → Environment Variables**.
-- **Preview Deployments**: Enabled (per PR by default).
-- **Image Optimization**: Configure `next.config.mjs` `images.remotePatterns` for your CMS/CDN (Cloudinary/Optimizely/Cloudflare).
+- **Framework Preset:** Next.js  
+- **Build Command:** `pnpm build`  
+- **Install Command:** `pnpm install --frozen-lockfile`  
+- **Output:** Auto (Next.js)  
+- **Env Variables:** add all required keys under _Project → Settings → Environment Variables_  
+- **Preview Deployments:** Enabled (per PR by default)  
+- **Image Optimization:** configure `next.config.mjs → images.remotePatterns` for CMS/CDN (Optimizely Assets, Cloudinary, etc.)
 
 ### ISR / Revalidation
-- Revalidate interval is set in route files or using `revalidate` export.
-- For on-demand revalidation, create an API route (already present) and set a **webhook** in CMS:
-  - Endpoint: `/api/revalidate?secret=${OPTIMIZELY_REVALIDATE_SECRET}`
-  - Method: `POST`
+- Revalidate interval is set via each route’s `revalidate` export.
+- For on-demand ISR, use the existing API route and set a CMS webhook:
+  ```
+  POST /api/revalidate?secret=${OPTIMIZELY_REVALIDATE_SECRET}
+  ```
 
 ### Draft Mode
-- Ensure `OPTIMIZELY_PREVIEW_SECRET` is set.
-- Draft routes under `/draft/...` are designed for editor previews. Protect with Vercel env scoping if needed.
+- Ensure `OPTIMIZELY_PREVIEW_SECRET` is set.  
+- Draft/Visual Builder routes live under `/draft/[version]/[[...slug]]`.  
+- Protect preview envs using **Vercel env scopes** or team-only access.
 
-### Vercel Monorepo (Turborepo) Tips
-- In **Project Settings → Root Directory** set to the app path: `apps/web`
-- Add `pnpm-workspace.yaml` at repo root.
-- Optionally include a `vercel.json` with monorepo project config (only if needed).
+### Vercel Monorepo (Turborepo)
+- In **Project Settings → Root Directory**, set to `apps/web`  
+- Keep a top-level `pnpm-workspace.yaml`  
+- Optional `vercel.json` for monorepo overrides (rarely needed)
 
 ---
 
-## Docker (Generic)
+## Docker (Cloud-Ready)
 
-Use the provided `Dockerfile` (or create if absent):
-
-```Dockerfile
+```dockerfile
 # syntax=docker/dockerfile:1.7-labs
 FROM node:20-alpine AS deps
 WORKDIR /app
@@ -97,52 +97,49 @@ CMD ["pnpm", "start"]
 ```
 
 **Run locally:**
-
 ```bash
 docker build -t saas-cms-fe-starter:latest .
 docker run -p 3000:3000 --env-file .env.local saas-cms-fe-starter:latest
 ```
 
 ### Cloud Run (GCP)
-- Build the image and push to GCR/Artifact Registry.
-- Deploy with min instances (for warm starts) if you rely on fast ISR.
-- Set environment vars in the service.
-- Enable **server-side timeouts** ≥ 60s for heavy preview queries.
+- Push built image to GCR/Artifact Registry.  
+- Deploy with ≥ 1 min instances (for warm ISR).  
+- Set env vars in Cloud Run service.  
+- Allow ≥ 60 s timeouts for heavy preview queries.
 
 ### ECS (AWS)
-- Push image to ECR; define **Task Definition** with env vars as Secrets.
-- Use **Fargate**; map port **3000**.
-- **ALB** with target group health checks on `/` (or `/healthz` if you add one).
-- Optionally front with **CloudFront** for caching + image optimization pass-through.
+- Push to ECR → Task Definition with env vars as Secrets.  
+- Use **Fargate**, port 3000.  
+- **ALB** with health check on `/` (or `/healthz`).  
+- Optionally front with **CloudFront** for caching + images.
 
-### Azure Web Apps for Containers
-- Set startup command to `pnpm start`.
-- Configure App Settings with env vars.
-- Consider **Azure Front Door** for global caching/SSL.
-
----
-
-## Netlify
-
-- Use the Next.js runtime plugin if needed for Next 15 features.
-- Set **build** to `pnpm build`, **publish** to `.next` is not used (Netlify’s adapter handles it).
-- Enable **Edge Functions**/SSR per Netlify’s Next integration.
-- Verify ISR support configuration on your plan.
+### Azure Web Apps
+- Startup command: `pnpm start`  
+- Configure App Settings (env vars)  
+- Optionally front with **Azure Front Door** for global caching/SSL.
 
 ---
 
-## AWS Amplify
+## Netlify / Amplify
 
-- Connect repo → configure build settings:
-  - Pre-build: `corepack enable && corepack prepare pnpm@9.6.0 --activate`
-  - Build: `pnpm install --frozen-lockfile && pnpm build`
-- Amplify auto-detects Next.js and provisions SSR.
-- Add env vars in Amplify Console.
+### Netlify
+- Use Netlify’s Next.js runtime plugin for Next 15.  
+- **Build:** `pnpm build`  
+- **Publish:** handled automatically by adapter.  
+- Enable **Edge Functions / SSR** on supported plan.  
+- Verify ISR support in Netlify config.
+
+### Amplify
+- Pre-build: `corepack enable && corepack prepare pnpm@9.6.0 --activate`  
+- Build: `pnpm install --frozen-lockfile && pnpm build`  
+- Amplify auto-detects Next.js and provisions SSR.  
+- Add env vars in Amplify Console.  
 - Preview branches map to Amplify **Preview Environments**.
 
 ---
 
-## GitHub Actions (Matrix Example)
+## GitHub Actions (CI Matrix)
 
 ```yaml
 name: CI
@@ -171,19 +168,21 @@ jobs:
       - run: pnpm build
 ```
 
-> For **Vercel deployments**, you usually don’t need GitHub Actions to deploy; Vercel builds on push. If you **do** want CI + Deploy via GH Actions, use `vercel/actions` with a token and project ID.
+> For **Vercel deployments**, CI is optional — Vercel builds on push.  
+> If you prefer GitHub-driven deploys, use `vercel/actions` with a token + project ID.
 
 ---
 
 ## Environment & Secrets Management
 
-- Use per-environment scopes: **Production / Preview / Development**.
-- Rotate keys regularly.
-- In monorepos, prefer **shared secret managers** (1Password, Doppler, AWS Secrets Manager, GCP Secret Manager).
+- Use environment scopes: Production / Preview / Development.  
+- Rotate keys regularly.  
+- For monorepos, centralize secrets in 1Password, Doppler, AWS Secrets Manager, or GCP Secret Manager.
 
-### Env Matrix (example)
+### Env Matrix (Example)
+
 | Var | Dev (local) | Preview | Prod |
-| --- | ----------- | ------- | ---- |
+| --- | ------------ | -------- | ----- |
 | OPTIMIZELY_API_URL | cg.optimizely.com/content/v2 | same | same |
 | OPTIMIZELY_SINGLE_KEY | local/test | preview key | prod key |
 | OPTIMIZELY_PREVIEW_SECRET | base64-local | base64-preview | base64-prod |
@@ -192,54 +191,54 @@ jobs:
 
 ---
 
-## Caching, Images, and Edge
+## Caching, Images & Edge
 
-- **Next/Image**: add `images.remotePatterns` or `images.domains` for Cloudinary/Optimizely/Cloudflare sources.
-- **CDN**: If fronted by Cloudflare/CloudFront/Front Door, ensure **origin cache** respects Next’s **ISR** revalidation headers.
-- **Compression**: Most platforms handle gzip/br automatically; no manual step required.
-- **Edge vs Node runtime**: This starter uses Node runtime by default. If moving handlers to **edge**, ensure APIs used (e.g., `draftMode`) are compatible.
+- **Next/Image:** configure `images.remotePatterns` or `images.domains` for Optimizely Assets / Cloudinary.  
+- **CDN:** If fronted by Cloudflare, CloudFront, or Front Door, ensure origin cache respects Next’s ISR headers.  
+- **Compression:** Handled automatically (gzip/br).  
+- **Runtime:** Node (default). Edge mode possible if APIs (`draftMode`, etc.) remain compatible.
 
 ---
 
 ## Preview & Draft Mode
 
-- Draft routes live at `/draft/...` and require `OPTIMIZELY_PREVIEW_SECRET` for privileged GraphQL preview requests.
-- For “preview from CMS” flows, expose a route `/api/preview` that toggles Next draft mode via a secret token (present in this repo).
+- Draft routes: `/draft/[version]/[[...slug]]`  
+- Requires `OPTIMIZELY_PREVIEW_SECRET` for privileged GraphQL preview requests.  
+- `/api/preview` toggles Next Draft Mode via secret token (present in repo).  
+- Disable via `/api/preview/disable`.
 
 ---
 
 ## Health & Observability
 
-- Optional integrations:
-  - Sentry (SSR + browser)
-  - Datadog / New Relic
-  - GA4 (respect CMP consent modes)
-- Log redaction: never log secrets. For GraphQL errors, only return **safe** messages to the client.
+- Optional integrations: Sentry, Datadog, New Relic, GA4 (with CMP consent mode).  
+- Log redaction: never log secrets; surface only safe GraphQL errors.
 
 ---
 
 ## Production Checklist
 
-- [ ] All env vars set in hosting platform
-- [ ] `NEXT_PUBLIC_MOCK_OPTIMIZELY=false` for prod
-- [ ] Image domains/remotePatterns configured
-- [ ] Revalidation webhook secret set
-- [ ] Draft mode secret set
-- [ ] Robots & sitemap verified
-- [ ] 404/500 routes render correctly
-- [ ] Security headers via platform (or middleware) configured
-- [ ] Monitoring/alerts configured
-- [ ] Backups/rollbacks defined (platform or infra-level)
+- [ ] All env vars set in platform  
+- [ ] `NEXT_PUBLIC_MOCK_OPTIMIZELY=false` for prod  
+- [ ] Image domains configured  
+- [ ] Revalidation webhook secret set  
+- [ ] Draft mode secret set  
+- [ ] Robots & sitemap verified  
+- [ ] 404/500 routes render properly  
+- [ ] Security headers enabled  
+- [ ] Monitoring/alerts configured  
+- [ ] Backups/rollbacks defined at platform level
 
 ---
 
 ## FAQ
 
-**Q: Can we deploy the monorepo with Turborepo to Vercel?**  
-A: Yes. Create a Vercel project **per app**. Set the app’s **Root Directory** (`apps/web`). Vercel handles workspaces automatically.
+**Q: Can we deploy a Turborepo to Vercel?**  
+A: Yes. Create a Vercel project per app and set Root Directory to `apps/web`. Vercel handles workspaces automatically.
 
 **Q: Do we need Docker on Vercel?**  
-A: No—Vercel builds from source. Use Docker only for other platforms or local reproducibility.
+A: No — Vercel builds from source. Use Docker for other platforms or local reproducibility.
 
 **Q: How do we enable on-demand ISR from the CMS?**  
-A: Configure CMS to call `/api/revalidate?secret=...` on publish/unpublish. The route verifies `OPTIMIZELY_REVALIDATE_SECRET` and invalidates cache by tag/path.
+A: Configure Optimizely to POST `/api/revalidate?secret=...` on publish/unpublish.  
+  The route verifies `OPTIMIZELY_REVALIDATE_SECRET` and invalidates cache by tag or path.

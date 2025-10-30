@@ -2,7 +2,7 @@
 
 This document outlines the current state of the **SaaS CMS Frontend Starter** and recommended next steps for the next development team. It serves as a handover checklist and TODO list.
 
-_Last updated: 09 September 2025_
+_Last updated: **30 October 2025**_
 
 ---
 

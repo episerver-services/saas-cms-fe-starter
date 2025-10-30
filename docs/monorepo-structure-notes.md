@@ -2,7 +2,7 @@
 
 This document describes how to integrate the **SaaS CMS FE Starter** into a pnpm-based monorepo (Turborepo-style) with multiple Next.js apps and shared packages.
 
-_Last updated: 09 September 2025_
+_Last updated: **30 October 2025**_
 
 ---
 
@@ -12,11 +12,13 @@ _Last updated: 09 September 2025_
 repo/
 ├─ apps/
 │  ├─ marketing/                # Next.js app (this starter)
+│  │  └─ draft/                 # Draft & preview routes
 │  ├─ docs/                     # Another Next.js app (example)
 │  └─ admin/                    # Another app
 ├─ packages/
 │  ├─ lib-optimizely/           # fetch.ts, type guards, language utils, VB types
 │  ├─ ui/                       # shared UI (shadcn components, tokens)
+│  ├─ hooks/                    # shared React hooks (useIsInsideVB, etc.)
 │  ├─ testing/                  # jest/pw configs, test-utils, MSW handlers
 │  ├─ eslint-config/            # eslint config shareable package
 │  ├─ tsconfig/                 # TS base configs
@@ -92,7 +94,8 @@ packages:
       "@lib-optimizely/*": ["packages/lib-optimizely/src/*"],
       "@config/*": ["packages/config/src/*"],
       "@testing/*": ["packages/testing/src/*"],
-      "@ui/*": ["packages/ui/src/*"]
+      "@ui/*": ["packages/ui/src/*"],
+      "@hooks/*": ["packages/hooks/src/*"]
     }
   }
 }
@@ -124,7 +127,8 @@ packages:
   "dependencies": {
     "@lib-optimizely": "workspace:*",
     "@config": "workspace:*",
-    "@ui": "workspace:*"
+    "@ui": "workspace:*",
+    "@hooks": "workspace:*"
   },
   "devDependencies": {
     "@testing": "workspace:*",
@@ -143,7 +147,8 @@ packages:
   - Playwright (`playwright.base.ts`)
   - Cucumber (`bdd.base.ts`)
 
-- App-level configs extend these presets.
+- App-level configs extend these presets.  
+- Optional: you can also enable **Vitest** for Storybook/Vite test compatibility.
 
 ---
 
@@ -165,7 +170,7 @@ jobs:
         with: { version: 9 }
       - name: Setup Node
         uses: actions/setup-node@v4
-        with: { node-version: 20, cache: 'pnpm' }
+        with: { node-version: 22, cache: 'pnpm' }
       - run: pnpm install --frozen-lockfile
       - name: Build (scoped)
         run: pnpm turbo run build --filter=@apps/${{ matrix.app }}
@@ -179,6 +184,7 @@ jobs:
 
 - Align Node + Next versions across apps.  
 - Draft Mode (`next/headers`) is runtime-scoped — safe in shared packages.  
+- Avoid importing **client-only hooks** into server components.  
 - Keep secrets **per app** (`.env.local`), but you can add shared defaults in `packages/config-env`.  
 - Use `pnpm turbo run build --filter=@apps/marketing` for scoped builds.
 
@@ -191,5 +197,6 @@ jobs:
 3. Extract shared code into `packages/lib-optimizely` + `packages/config`.  
 4. Update imports to workspace aliases.  
 5. Move test presets into `packages/testing`.  
-6. Wire `turbo` + CI.  
-7. Split envs and connect each app to hosting (Vercel or other).  
+6. Add `packages/hooks` for reusable client-side logic.  
+7. Wire `turbo` + CI.  
+8. Split envs and connect each app to hosting (Vercel or other).
