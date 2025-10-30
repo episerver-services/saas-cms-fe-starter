@@ -29,7 +29,7 @@ _Last updated: 09 September 2025_
   - `OPTIMIZELY_PREVIEW_SECRET`
   - `OPTIMIZELY_REVALIDATE_SECRET` (if using on-demand ISR)
   - `NEXT_PUBLIC_CMS_URL`
-  - For local/mocks: `MOCK_OPTIMIZELY`, `NEXT_PUBLIC_MOCK_OPTIMIZELY`
+  - For local/mocks: `NEXT_PUBLIC_MOCK_OPTIMIZELY`
 - **Build**: `pnpm install && pnpm build`
 - **Start**: `pnpm start` (or platform-equivalent)
 - **Cache/ISR**: ensure the platform **supports Next.js ISR** and **request header passthrough** for draft/preview mode.
@@ -221,7 +221,7 @@ jobs:
 ## Production Checklist
 
 - [ ] All env vars set in hosting platform
-- [ ] `MOCK_OPTIMIZELY=false` for prod
+- [ ] `NEXT_PUBLIC_MOCK_OPTIMIZELY=false` for prod
 - [ ] Image domains/remotePatterns configured
 - [ ] Revalidation webhook secret set
 - [ ] Draft mode secret set

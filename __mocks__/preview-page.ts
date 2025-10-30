@@ -1,6 +1,6 @@
 /**
  * Returns mock GraphQL data for a given query name and variable set.
- * Used when MOCK_OPTIMIZELY is enabled in development.
+ * Used when NEXT_PUBLIC_MOCK_OPTIMIZELY is enabled in development.
  *
  * Extend this switch case to support additional operations.
  *
@@ -13,7 +13,7 @@
  */
 export function getMockResponse<T>(query: string, variables: unknown): T {
   const operation = extractOperationName(query)
-  console.info('[MOCK_OPTIMIZELY] Mocking query:', operation)
+  console.info('[NEXT_PUBLIC_MOCK_OPTIMIZELY] Mocking query:', operation)
 
   // ✅ Mock for StartPage (non-VB mode)
   if (operation === 'GetPreviewStartPage') {
@@ -94,7 +94,7 @@ export function getMockResponse<T>(query: string, variables: unknown): T {
   }
 
   // ❌ No match – fail gracefully
-  throw new Error(`[MOCK_OPTIMIZELY] No mock available for query: ${operation}`)
+  throw new Error(`[NEXT_PUBLIC_MOCK_OPTIMIZELY] No mock available for query: ${operation}`)
 }
 
 /**

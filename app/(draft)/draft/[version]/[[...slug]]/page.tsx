@@ -63,7 +63,7 @@ export default async function CmsPage({
 
   return (
     <div className="container py-10" data-epi-edit="blocks">
-      {process.env.MOCK_OPTIMIZELY !== 'true' && (
+      {process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY !== 'true' && (
         <OnPageEdit
           version={version}
           currentRoute={`/draft/${version}/${slug}`}

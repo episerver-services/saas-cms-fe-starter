@@ -45,7 +45,7 @@ const params = (version: string, slug?: string) =>
 describe('draft preview page (final behavior)', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    delete process.env.MOCK_OPTIMIZELY // ensure OnPageEdit path would render
+    delete process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY // ensure OnPageEdit path would render
   })
 
   it('throws notFound() when draft mode is disabled', async () => {

@@ -51,10 +51,10 @@ export async function generateMetadata({
 
   if (
     process.env.IS_BUILD === 'true' ||
-    process.env.MOCK_OPTIMIZELY === 'true'
+    process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY === 'true'
   ) {
     console.warn(
-      '[generateMetadata] Using fallback due to IS_BUILD or MOCK_OPTIMIZELY'
+      '[generateMetadata] Using fallback due to IS_BUILD or NEXT_PUBLIC_MOCK_OPTIMIZELY'
     )
     return { title: 'Optimizely Page', description: '' }
   }
@@ -95,10 +95,10 @@ export async function generateStaticParams(): Promise<
 > {
   if (
     process.env.IS_BUILD === 'true' ||
-    process.env.MOCK_OPTIMIZELY === 'true'
+    process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY === 'true'
   ) {
     console.warn(
-      '[generateStaticParams] Skipped due to IS_BUILD or MOCK_OPTIMIZELY'
+      '[generateStaticParams] Skipped due to IS_BUILD or NEXT_PUBLIC_MOCK_OPTIMIZELY'
     )
     return []
   }

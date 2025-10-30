@@ -56,7 +56,7 @@ async function safeDraftEnabled(): Promise<boolean> {
  * Low-level GraphQL fetcher for Optimizely, with dev-friendly fallbacks.
  *
  * Behavior by environment variables:
- * - `MOCK_OPTIMIZELY=true`: returns local mock data via `getMockResponse`.
+ * - `NEXT_PUBLIC_MOCK_OPTIMIZELY=true`: returns local mock data via `getMockResponse`.
  * - `IS_BUILD=true`: short-circuits with empty data (no network access during SSG).
  * - `OPTIMIZELY_API_URL` / `OPTIMIZELY_SINGLE_KEY`: required for real requests.
  * - `preview=true`: sets Basic auth using `OPTIMIZELY_PREVIEW_SECRET` and disables caching.
@@ -77,7 +77,7 @@ export const optimizelyFetch = async <Response, Variables = object>({
 }: OptimizelyFetch<Variables>): Promise<
   GraphqlResponse<Response> & { headers: Headers }
 > => {
-  const isMock = process.env.MOCK_OPTIMIZELY === 'true'
+  const isMock = process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY === 'true'
 
   // 🧪 Dev mock path
   if (isMock) {
@@ -181,7 +181,7 @@ const requester = async <T, V>(
  *
  * These methods intentionally reference placeholder queries (e.g. `'query ... { }'`).
  * In real integration, swap these for generated SDK calls from GraphQL Codegen.
- * While mocking (`MOCK_OPTIMIZELY=true`), requests are satisfied by `getMockResponse`.
+ * While mocking (`NEXT_PUBLIC_MOCK_OPTIMIZELY=true`), requests are satisfied by `getMockResponse`.
  */
 export const optimizely = {
   /** Retrieves the StartPage content in preview mode. */
@@ -244,7 +244,7 @@ export const optimizely = {
     options?: { preview?: boolean }
   ) {
     console.warn(
-      '[MOCK_OPTIMIZELY] getPageByURL() stub used with:',
+      '[NEXT_PUBLIC_MOCK_OPTIMIZELY] getPageByURL() stub used with:',
       variables,
       options
     )

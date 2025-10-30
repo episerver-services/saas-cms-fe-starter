@@ -8,7 +8,7 @@ import { optimizely } from '../fetch'
  * - **Draft Mode**: If `draftMode` is enabled *and* a `version` is provided, fetches that specific preview version.
  * - **Published Mode**: If draft mode is disabled *or* no `version` is supplied, fetches the published StartPage versions.
  *
- * This method supports local mocking when `MOCK_OPTIMIZELY=true` is set.
+ * This method supports local mocking when `NEXT_PUBLIC_MOCK_OPTIMIZELY=true` is set.
  *
  * @param params - Query parameters
  * @param params.locales - Locales to fetch (e.g., `['en']`).

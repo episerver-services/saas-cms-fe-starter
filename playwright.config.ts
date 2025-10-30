@@ -20,12 +20,12 @@ export default defineConfig({
   webServer: {
     // Run Next.js in production mode with mocks enabled
     // - NODE_ENV=production → ensures "next start" behavior
-    // - MOCK_OPTIMIZELY=true → prevents live Optimizely calls (safe for CI/local runs)
+    // - NEXT_PUBLIC_MOCK_OPTIMIZELY=true → prevents live Optimizely calls (safe for CI/local runs)
     // - IS_BUILD=true → skips generateStaticParams/fetch that break outside request scope
     command:
-      'cross-env NODE_ENV=production MOCK_OPTIMIZELY=true IS_BUILD=true ' +
+      'cross-env NODE_ENV=production NEXT_PUBLIC_MOCK_OPTIMIZELY=true IS_BUILD=true ' +
       'pnpm build && ' +
-      'cross-env NODE_ENV=production MOCK_OPTIMIZELY=true IS_BUILD=true ' +
+      'cross-env NODE_ENV=production NEXT_PUBLIC_MOCK_OPTIMIZELY=true IS_BUILD=true ' +
       'pnpm start',
 
     // ✅ Health endpoint is a lightweight /api/health route that always returns 200.

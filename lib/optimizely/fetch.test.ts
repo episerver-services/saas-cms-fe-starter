@@ -2,7 +2,7 @@
  * @file lib/optimizely/fetch.test.ts
  *
  * NOTE:
- * - We deliberately avoid branches that return local mocks (e.g. MOCK_OPTIMIZELY),
+ * - We deliberately avoid branches that return local mocks (e.g. NEXT_PUBLIC_MOCK_OPTIMIZELY),
  *   and focus on production behaviors.
  */
 
@@ -40,7 +40,7 @@ describe('optimizelyFetch (production behaviors)', () => {
     setEnv({
       NODE_ENV: 'production',
       IS_BUILD: 'false',
-      MOCK_OPTIMIZELY: 'false',
+      NEXT_PUBLIC_MOCK_OPTIMIZELY: 'false',
       OPTIMIZELY_API_URL: 'https://api.optimizely.test/graphql',
       OPTIMIZELY_SINGLE_KEY: 'key123',
       OPTIMIZELY_PREVIEW_SECRET: 'basic-secret',
@@ -177,7 +177,7 @@ describe('requester (auto preview via draftMode)', () => {
     setEnv({
       NODE_ENV: 'production',
       IS_BUILD: 'false',
-      MOCK_OPTIMIZELY: 'false',
+      NEXT_PUBLIC_MOCK_OPTIMIZELY: 'false',
       OPTIMIZELY_API_URL: 'https://api.optimizely.test/graphql',
       OPTIMIZELY_SINGLE_KEY: 'key123',
       OPTIMIZELY_PREVIEW_SECRET: 'basic-secret',

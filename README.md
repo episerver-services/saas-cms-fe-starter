@@ -43,7 +43,6 @@ OPTIMIZELY_REVALIDATE_SECRET=
 NEXT_PUBLIC_CMS_URL=your-cms-instance-domain.cms.optimizely.com
 
 # Enable mocks for local preview without a live CMS
-MOCK_OPTIMIZELY=true
 NEXT_PUBLIC_MOCK_OPTIMIZELY=true
 ```
 

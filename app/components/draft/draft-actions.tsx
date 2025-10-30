@@ -44,7 +44,7 @@ const DraftActions = ({ pathname: injectedPathname }: DraftActionsProps) => {
         textDesktop="Disable Draft"
         onClick={async () => {
           try {
-            await fetch('/api/draft/disable')
+            await fetch('/api/preview/disable')
             router.refresh()
           } catch (err) {
             // Swallow to avoid breaking editor flow

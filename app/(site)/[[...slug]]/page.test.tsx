@@ -84,7 +84,7 @@ describe('site [[...slug]] page: generateMetadata', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     process.env.IS_BUILD = 'false'
-    process.env.MOCK_OPTIMIZELY = 'false'
+    process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY = 'false'
     draftModeMock.mockResolvedValue({ isEnabled: false })
     resolveMock.mockImplementation((locale: string, slug?: string[]) => ({
       localeCode: (locale ?? 'en').toLowerCase(),
@@ -95,8 +95,8 @@ describe('site [[...slug]] page: generateMetadata', () => {
     }))
   })
 
-  it('returns fallback metadata during IS_BUILD or MOCK_OPTIMIZELY', async () => {
-    await withEnv({ IS_BUILD: 'true', MOCK_OPTIMIZELY: 'false' }, async () => {
+  it('returns fallback metadata during IS_BUILD or NEXT_PUBLIC_MOCK_OPTIMIZELY', async () => {
+    await withEnv({ IS_BUILD: 'true', NEXT_PUBLIC_MOCK_OPTIMIZELY: 'false' }, async () => {
       const meta = await generateMetadata({ params: params('en', ['about']) })
       expect(meta.title).toBe('Optimizely Page')
     })
@@ -149,11 +149,11 @@ describe('site [[...slug]] page: generateStaticParams', () => {
     jest.clearAllMocks()
     // Ensure short-circuit flags are OFF for these tests
     process.env.IS_BUILD = 'false'
-    process.env.MOCK_OPTIMIZELY = 'false'
+    process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY = 'false'
   })
 
-  it('returns [] and does not call AllPages during IS_BUILD or MOCK_OPTIMIZELY', async () => {
-    await withEnv({ IS_BUILD: 'true', MOCK_OPTIMIZELY: 'false' }, async () => {
+  it('returns [] and does not call AllPages during IS_BUILD or NEXT_PUBLIC_MOCK_OPTIMIZELY', async () => {
+    await withEnv({ IS_BUILD: 'true', NEXT_PUBLIC_MOCK_OPTIMIZELY: 'false' }, async () => {
       const res = await generateStaticParams()
       expect(res).toEqual([])
       expect(allPagesMock).not.toHaveBeenCalled()
@@ -205,7 +205,7 @@ describe('site [[...slug]] page: default export', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     process.env.IS_BUILD = 'false'
-    process.env.MOCK_OPTIMIZELY = 'false'
+    process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY = 'false'
   })
 
   it('renders Suspense → Mapper with filtered blocks when page is valid (has _metadata.modified)', async () => {
