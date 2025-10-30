@@ -1,6 +1,6 @@
 import '../app/globals.css'
 import type { Preview } from '@storybook/nextjs-vite'
-import Header from '../app/components/layout/header/header'
+import Header from '../app/components/layout/header'
 import Footer from '../app/components/layout/footer'
 
 // Optional: viewports aligned to your Tailwind breakpoints
