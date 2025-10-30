@@ -27,7 +27,7 @@ function ContentAreaMapper({
   isVisualBuilder?: boolean
   experienceElements?: ExperienceElement[] | null
 }) {
-  // Visual Builder rendering
+  // 🔹 Visual Builder rendering
   if (isVisualBuilder) {
     if (!experienceElements || experienceElements.length === 0) return null
 
@@ -36,8 +36,9 @@ function ContentAreaMapper({
         {experienceElements.map(
           ({ displaySettings, component, key }, index) => (
             <div
-              data-epi-block-id={key}
               key={`${component?.__typename ?? 'unknown'}--${index}`}
+              data-epi-block-id={key}
+              data-epi-edit={component?.__typename ?? 'component'}
             >
               <Block
                 typeName={component?.__typename}
@@ -57,13 +58,17 @@ function ContentAreaMapper({
     )
   }
 
-  // CMS block rendering
+  // 🔹 CMS block rendering
   if (!blocks || blocks.length === 0) return null
 
   return (
     <>
       {blocks.map(({ __typename, ...props }, index) => (
-        <div key={`${__typename ?? 'unknown'}--${index}`}>
+        <div
+          key={`${__typename ?? 'unknown'}--${index}`}
+          data-epi-block-id={props.key ?? `cms-block-${index}`}
+          data-epi-edit={__typename ?? 'block'}
+        >
           <Block
             typeName={__typename}
             props={{
@@ -102,7 +107,11 @@ function renderNestedSlots(props: Record<string, any>, preview: boolean) {
         if (!nestedBlocks || nestedBlocks.length === 0) return null
 
         return (
-          <div key={`slot--${slotKey}`} data-slot-area={slotKey}>
+          <div
+            key={`slot--${slotKey}`}
+            data-slot-area={slotKey}
+            data-epi-edit="slot"
+          >
             <ContentAreaMapper blocks={nestedBlocks} preview={preview} />
           </div>
         )

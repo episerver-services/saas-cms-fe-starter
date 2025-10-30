@@ -1,6 +1,7 @@
 import DraftActions from '@/app/components/draft/draft-actions'
 import SharedPageLayout from '@/app/components/layout/shared-page-layout'
 import { Heading } from '@/app/components/ui/heading'
+import { EditModeProvider } from '@/app/context/edit-mode-context'
 
 /**
  * Disable ISR and force dynamic rendering for all draft routes.
@@ -15,6 +16,7 @@ export const revalidate = 0
  * - The CMS preview script
  * - Floating editor controls (`DraftActions`)
  * - A visual heading for context in preview mode
+ * - Global Edit Mode context for Visual Builder & preview components
  *
  * @param children - The nested draft route content to render.
  * @param params - Dynamic route parameters wrapped in a Promise (App Router convention).
@@ -34,11 +36,16 @@ export default async function DraftLayout({
 }) {
   const { locale } = await params
 
+  // Entire draft tree runs in edit mode (VB or draft preview)
+  const isEditMode = true
+
   return (
-    <SharedPageLayout locale={locale} includeCMSPreview>
-      <DraftActions />
-      <Heading label="Draft/Preview Route" />
-      {children}
-    </SharedPageLayout>
+    <EditModeProvider value={isEditMode}>
+      <SharedPageLayout locale={locale} includeCMSPreview>
+        <DraftActions />
+        <Heading label="Draft/Preview Route" />
+        {children}
+      </SharedPageLayout>
+    </EditModeProvider>
   )
 }
