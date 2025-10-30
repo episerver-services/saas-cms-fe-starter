@@ -1,7 +1,7 @@
 import DraftActions from '@/app/components/draft/draft-actions'
-import SharedPageLayout from '@/app/components/layout/shared-page-layout'
+import SharedPageLayoutClient from '@/app/components/layout/shared-page-layout-client'
 import { Heading } from '@/app/components/ui/heading'
-import { EditModeProvider } from '@/app/context/edit-mode-context'
+import EditModeProviderClient from '@/app/context/edit-mode-provider-client'
 
 /**
  * Disable ISR and force dynamic rendering for all draft routes.
@@ -40,12 +40,12 @@ export default async function DraftLayout({
   const isEditMode = true
 
   return (
-    <EditModeProvider value={isEditMode}>
-      <SharedPageLayout locale={locale} includeCMSPreview>
+    <EditModeProviderClient value={isEditMode}>
+      <SharedPageLayoutClient locale={locale} includeCMSPreview>
         <DraftActions />
         <Heading label="Draft/Preview Route" />
         {children}
-      </SharedPageLayout>
-    </EditModeProvider>
+      </SharedPageLayoutClient>
+    </EditModeProviderClient>
   )
 }
