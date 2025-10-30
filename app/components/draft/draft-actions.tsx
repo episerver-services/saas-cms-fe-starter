@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation'
 import CTAButton from '@/app/components/ui/cta-button'
+import { isMockOptimizely } from '@/lib/env'
 
 /**
  * Renders draft-only action buttons for editors when running in mock Optimizely mode.
@@ -31,7 +32,7 @@ const DraftActions = ({ pathname: injectedPathname }: DraftActionsProps) => {
   const hookPathname = usePathname()
   const pathname = injectedPathname ?? hookPathname
 
-  const isMock = process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY === 'true'
+  const isMock = isMockOptimizely()
   const isDraftRoute = !!pathname && pathname.startsWith('/draft/')
   const showActions = isMock && isDraftRoute
 

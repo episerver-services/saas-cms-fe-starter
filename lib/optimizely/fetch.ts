@@ -1,6 +1,7 @@
 import { getMockResponse } from '@/__mocks__/preview-page'
 import { isVercelError } from '../type-guards'
 import { draftMode } from 'next/headers'
+import { isMockOptimizely } from '@/lib/env'
 
 /**
  * Options for the low-level Optimizely GraphQL fetcher.
@@ -77,7 +78,7 @@ export const optimizelyFetch = async <Response, Variables = object>({
 }: OptimizelyFetch<Variables>): Promise<
   GraphqlResponse<Response> & { headers: Headers }
 > => {
-  const isMock = process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY === 'true'
+  const isMock = isMockOptimizely()
 
   // 🧪 Dev mock path
   if (isMock) {

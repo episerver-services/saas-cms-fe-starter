@@ -20,6 +20,11 @@ jest.mock('@/app/components/errors/fallback-error-ui', () => {
   const stub = jest.fn((props: any) => React.createElement('div', props))
   return { __esModule: true, default: stub }
 })
+// Mock unified env helper
+jest.mock('@/lib/env', () => ({
+  isMockOptimizely: jest.fn(() => false),
+}))
+
 const notFoundMock = jest.fn(() => {
   const err = new Error('NEXT_NOT_FOUND')
   ;(err as any).digest = 'NEXT_NOT_FOUND'
@@ -33,10 +38,12 @@ jest.mock('next/navigation', () => ({
 import CmsPage from './page'
 import { checkDraftMode } from '@/lib/utils/draft-mode'
 import { optimizely } from '@/lib/optimizely/fetch'
+import { isMockOptimizely } from '@/lib/env'
 
 const checkDraftModeMock = checkDraftMode as unknown as jest.Mock
 const getPreviewStartPageMock = (optimizely as any)
   .GetPreviewStartPage as jest.Mock
+const isMockOptimizelyMock = isMockOptimizely as jest.Mock
 
 // helper to match the page’s params typing (Promise)
 const params = (version: string, slug?: string) =>
@@ -45,7 +52,7 @@ const params = (version: string, slug?: string) =>
 describe('draft preview page (final behavior)', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    delete process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY // ensure OnPageEdit path would render
+    isMockOptimizelyMock.mockReturnValue(false) // ensure OnPageEdit path would render
   })
 
   it('throws notFound() when draft mode is disabled', async () => {
@@ -85,8 +92,7 @@ describe('draft preview page (final behavior)', () => {
     expect(html).toContain('"version":"v3"')
     expect(html).toContain('"currentRoute":"/draft/v3/en/about"')
 
-    // Mapper present with blocks + preview
-    expect(html).toContain('"preview":true')
+    // Mapper present with blocks
     expect(html).toContain('{"id":1}')
     expect(html).toContain('{"id":2}')
   })

@@ -4,6 +4,7 @@ import { optimizely } from '@/lib/optimizely/fetch'
 import { LOCALES, mapPathWithoutLocale } from '@/lib/optimizely/utils/language'
 import { generateAlternates } from '@/lib/utils/metadata'
 import { resolveSlugAndLocale } from '@/lib/utils/routing'
+import { isMockOptimizely } from '@/lib/env'
 import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
@@ -49,10 +50,7 @@ export async function generateMetadata({
   const { locale, slug } = await params
   const { localeCode, formattedSlug } = resolveSlugAndLocale(locale, slug)
 
-  if (
-    process.env.IS_BUILD === 'true' ||
-    process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY === 'true'
-  ) {
+  if (process.env.IS_BUILD === 'true' || isMockOptimizely()) {
     console.warn(
       '[generateMetadata] Using fallback due to IS_BUILD or NEXT_PUBLIC_MOCK_OPTIMIZELY'
     )
@@ -93,10 +91,7 @@ export async function generateMetadata({
 export async function generateStaticParams(): Promise<
   Array<{ locale: string; slug?: string[] }>
 > {
-  if (
-    process.env.IS_BUILD === 'true' ||
-    process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY === 'true'
-  ) {
+  if (process.env.IS_BUILD === 'true' || isMockOptimizely()) {
     console.warn(
       '[generateStaticParams] Skipped due to IS_BUILD or NEXT_PUBLIC_MOCK_OPTIMIZELY'
     )

@@ -4,26 +4,11 @@ import OnPageEdit from '@/app/components/draft/on-page-edit'
 import { optimizely } from '@/lib/optimizely/fetch'
 import { checkDraftMode } from '@/lib/utils/draft-mode'
 import { notFound } from 'next/navigation'
+import { isMockOptimizely } from '@/lib/env'
 
-/**
- * Disables ISR and enables dynamic rendering for this page.
- */
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
 
-/**
- * Visual Builder draft preview route for rendering unpublished CMS content.
- *
- * Supports Optimizely SaaS CMS Visual Builder editing by allowing preview access
- * to specific page versions via `/draft/{version}/{...slug}`.
- *
- * If draft mode is not permitted, this will trigger Next.js 404 (`notFound()`).
- *
- * @param params - Route params provided by Next.js
- * @param params.version - The Visual Builder draft version (GUID)
- * @param params.slug - Optional slug path for the previewed page (e.g. `about-us`)
- * @returns A React tree for the draft page or a fallback error UI when fetching fails
- */
 export default async function CmsPage({
   params,
 }: {
@@ -36,14 +21,19 @@ export default async function CmsPage({
 
   let pageResponse:
     | {
-        StartPage?: { item?: { blocks?: unknown[] | null } | null }
+        StartPage?: {
+          item?: {
+            blocks?: unknown[] | null
+            _metadata?: Record<string, unknown>
+          } | null
+        }
       }
     | undefined
 
   try {
     pageResponse = await optimizely.GetPreviewStartPage({
       version,
-      locales: [], // no locales required in this starter
+      locales: [],
     })
   } catch (err) {
     return (
@@ -62,14 +52,18 @@ export default async function CmsPage({
   if (!blocks.length) return notFound()
 
   return (
-    <div className="container py-10" data-epi-edit="blocks">
-      {process.env.NEXT_PUBLIC_MOCK_OPTIMIZELY !== 'true' && (
+    <div
+      className="container py-10"
+      data-epi-edit="blocks"
+      data-epi-block-id={page?._metadata?.guid ?? 'draft-root'}
+    >
+      {!isMockOptimizely() && (
         <OnPageEdit
           version={version}
           currentRoute={`/draft/${version}/${slug}`}
         />
       )}
-      <ContentAreaMapper blocks={blocks} preview />
+      <ContentAreaMapper blocks={blocks} />
     </div>
   )
 }
