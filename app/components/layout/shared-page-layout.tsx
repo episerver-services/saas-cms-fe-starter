@@ -31,7 +31,7 @@ const geistMono = Geist_Mono({
  *
  * @param locale - Document language, applied to the <html> tag (default: "en")
  * @param children - React node tree for the current page
- * @param includeCMSPreview - If true, injects Optimizely CMS preview script in production
+ * @param includeCMSPreview - If true, injects Optimizely CMS preview script
  */
 export default function SharedPageLayout({
   locale = 'en',
@@ -42,17 +42,30 @@ export default function SharedPageLayout({
   children: React.ReactNode
   includeCMSPreview?: boolean
 }) {
+  const cmsUrl = process.env.NEXT_PUBLIC_CMS_URL
+
   return (
     <html
       lang={locale}
       className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <body className="antialiased">
-        {/* CMS editor script — only loaded in production with explicit opt-in */}
-        {includeCMSPreview && process.env.NODE_ENV === 'production' && (
+        {/* CMS editor script — now loads in all environments (not just production) */}
+        {includeCMSPreview && cmsUrl && (
           <Script
-            src={`${process.env.NEXT_PUBLIC_CMS_URL}/util/javascript/communicationinjector.js`}
+            src={`${cmsUrl}/util/javascript/communicationinjector.js`}
             strategy="afterInteractive"
+            onLoad={() =>
+              console.info(
+                '✅ Optimizely communication injector loaded successfully.'
+              )
+            }
+            onError={(e) =>
+              console.warn(
+                '⚠️ Failed to load communicationinjector.js. Check NEXT_PUBLIC_CMS_URL and network access.',
+                e
+              )
+            }
           />
         )}
 
