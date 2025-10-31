@@ -9,7 +9,7 @@ const base = {
 }
 
 const config = async () => {
-  // Node env: route/API tests
+  // Node env: route/API/middleware tests
   const nodeProject = await createJestConfig({
     ...base,
     displayName: 'node-routes',
@@ -17,7 +17,8 @@ const config = async () => {
     testMatch: [
       '**/*.route.test.[jt]s?(x)',
       '**/*.api.test.[jt]s?(x)',
-      '**/route.test.[jt]s?(x)', // 👈 pick up app/.../route.test.ts
+      '**/route.test.[jt]s?(x)',
+      '**/middleware.test.[jt]s?(x)', // ✅ GLOB version (not regex)
     ],
   })()
 
@@ -31,7 +32,8 @@ const config = async () => {
       ...base.testPathIgnorePatterns,
       '.*\\.route\\.test\\.[jt]sx?$',
       '.*\\.api\\.test\\.[jt]sx?$',
-      '.*/route\\.test\\.[jt]sx?$', // 👈 keep route.test.* out of jsdom
+      '.*/route\\.test\\.[jt]sx?$',
+      '.*/middleware\\.test\\.[jt]sx?$', // ✅ regex version (ignored by jsdom)
     ],
   })()
 
