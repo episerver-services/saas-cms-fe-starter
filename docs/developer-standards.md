@@ -2,7 +2,7 @@
 
 This document defines conventions and expectations for contributors working on the client FE repository. These standards help ensure a consistent, maintainable, and accessible codebase.
 
-_Last updated: **30 October 2025**_
+_Last updated: **31 October 2025**_
 
 ---
 
@@ -75,13 +75,19 @@ function calculatePrice(price: number, vat: number): number {
 
 ## 🔐 Environment Variables
 
-All runtime configuration is via `.env.*` files. Key variables include:
+All runtime configuration is via `.env.*` files, shared between local, preview, and production builds.
 
-- `OPTIMIZELY_BEARER_TOKEN`
-- `OPTIMIZELY_CONTENT_ID`
-- `SITE_DOMAIN`
+Required keys:
 
-Use `dotenv-cli` for running in dev with custom environment configs (see `pnpm dev:*` scripts).
+- `OPTIMIZELY_API_URL`
+- `OPTIMIZELY_SINGLE_KEY`
+- `OPTIMIZELY_PREVIEW_SECRET` (used for middleware token validation)
+- `OPTIMIZELY_REVALIDATE_SECRET`
+- `NEXT_PUBLIC_CMS_URL`
+- `NEXT_PUBLIC_MOCK_OPTIMIZELY`
+- `IS_BUILD` (used to skip CMS calls during CI/CD builds)
+
+Use `dotenv-cli` for local overrides or `.env.local` for developer-specific secrets.
 
 ---
 
@@ -181,7 +187,8 @@ GraphQL types and SDK methods are generated via:
 pnpm codegen
 ```
 
-Do not edit generated files manually.
+Do not edit generated files manually.  
+Codegen is optional when operating in mock-only mode.
 
 - GraphQL queries live in: `lib/optimizely/queries/`
 - Generated SDK outputs to: `lib/optimizely/sdk.ts`
@@ -191,10 +198,13 @@ Do not edit generated files manually.
 
 ## 🧪 Preview Mode & Draft Handling
 
-- Draft mode is enabled via `/draft` route
-- Calls `draftMode().enable()` to toggle Next.js preview mode
-- Works for both CMS pages and VB experiences
-- Never expose unpublished content outside of draft routes
+Draft mode and preview handling are secured via the middleware and `/api/preview` route.
+
+- Draft routes live under `/draft/[version]/[[...slug]]`
+- `checkDraftMode()` wraps Next.js `draftMode()` for safe detection in dev and prod
+- Middleware validates `OPTIMIZELY_PREVIEW_SECRET` before allowing access to draft or preview routes
+- Preview pages automatically set `robots: noindex, nofollow, nocache`
+- Never expose unpublished content outside of authenticated draft routes
 
 ---
 

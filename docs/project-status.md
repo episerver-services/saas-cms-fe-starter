@@ -7,7 +7,7 @@ This file tracks the current implementation progress of the custom frontend temp
 🔲 = Not Started  
 ❌ = Not in current scope
 
-_Last updated: 30 October 2025_
+_Last updated: 31 October 2025_
 
 ---
 
@@ -34,6 +34,7 @@ _Last updated: 30 October 2025_
 | Preview mode support (draft route) | ✅     | Draft mode routes implemented and functioning with mock data + VB bridge |
 | Mock preview route (`/draft/...`)  | ✅     | Supports local dev without CMS connection                             |
 | Fallback & error handling          | ✅     | `not-found.tsx` still handles unresolved routes cleanly               |
+| Preview token middleware           | ✅     | `/middleware.ts` validates `OPTIMIZELY_PREVIEW_SECRET` for draft/preview routes |
 
 ---
 
@@ -70,6 +71,7 @@ _Last updated: 30 October 2025_
 | Accessibility baseline     | 🔄     | Placeholder structure OK; skip links in place; no WCAG audit yet    |
 | Skip links, ARIA audit     | ✅⭐   | Skip link implemented; ARIA + edit-mode context validated           |
 | robots.txt / sitemap setup | ✅     | Sitemap and `robots.txt` routes added; static only for now          |
+| Draft metadata noindex     | ✅     | Draft/preview routes automatically set `robots: noindex, nofollow`  |
 
 ---
 
@@ -82,6 +84,7 @@ _Last updated: 30 October 2025_
 | Component unit test coverage    | ✅     | Full coverage across `/lib/utils`, loaders, and draft/VB components         |
 | E2E/Browsers tests (optional)   | ✅     | Playwright installed; simple baseline test included                         |
 | BDD tests (Cucumber) (optional) | ✅     | BDD configured with `@cucumber/cucumber`; working `.feature` test present   |
+| Middleware + robots tests       | 🔄     | Middleware and `generateMetadata()` coverage partially implemented          |
 
 ---
 
@@ -115,3 +118,9 @@ _Last updated: 30 October 2025_
 | ---------------------------------- | ------ | --------------------------------------------------------------------- |
 | Cookie consent framework           | ❌     | Requested by client; will require third-party account and integration |
 | CMP implementation (Optanon, etc.) | ❌     | Next team will choose and implement provider                          |
+
+---
+
+### ✅ Overall Stability
+**≈ 90% complete** for mock + Visual Builder–ready baseline.  
+Remaining work: CMS GraphQL re-integration, content mapping, and analytics tooling.

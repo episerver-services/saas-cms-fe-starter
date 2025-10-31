@@ -3,7 +3,7 @@
 This document outlines **deployment options, defaults, and gotchas** for the Optimizely SaaS CMS FE Starter.  
 Use it as a baseline, then tailor per environment.
 
-_Last updated: **30 October 2025**_
+_Last updated: **31 October 2025**_
 
 ---
 
@@ -26,10 +26,11 @@ _Last updated: **30 October 2025**_
 - **Env vars (required):**
   - `OPTIMIZELY_API_URL`
   - `OPTIMIZELY_SINGLE_KEY`
-  - `OPTIMIZELY_PREVIEW_SECRET`
+  - `OPTIMIZELY_PREVIEW_SECRET` (used for middleware token validation)
   - `OPTIMIZELY_REVALIDATE_SECRET` (if using on-demand ISR)
   - `NEXT_PUBLIC_CMS_URL`
   - `NEXT_PUBLIC_MOCK_OPTIMIZELY` (for local/mocks)
+  - `IS_BUILD` (set to `'true'` for CI/CD build-time optimisation logic)
 - **Build:** `pnpm install && pnpm build`
 - **Start:** `pnpm start` (or platform equivalent)
 - **Cache / ISR:** ensure the platform supports **Next ISR** and request-header passthrough for draft/preview mode.
@@ -55,9 +56,9 @@ _Last updated: **30 October 2025**_
   ```
 
 ### Draft Mode
-- Ensure `OPTIMIZELY_PREVIEW_SECRET` is set.  
-- Draft/Visual Builder routes live under `/draft/[version]/[[...slug]]`.  
-- Protect preview envs using **Vercel env scopes** or team-only access.
+- Draft/Visual Builder routes live under `/draft/[version]/[[...slug]]` and require a **valid preview token**.
+- Preview token (`OPTIMIZELY_PREVIEW_SECRET`) is validated by the **middleware**, rejecting unauthorised access (401).
+- Protect preview envs using **Vercel environment scopes** or team-only access.
 
 ### Vercel Monorepo (Turborepo)
 - In **Project Settings → Root Directory**, set to `apps/web`  
@@ -170,6 +171,15 @@ jobs:
 
 > For **Vercel deployments**, CI is optional — Vercel builds on push.  
 > If you prefer GitHub-driven deploys, use `vercel/actions` with a token + project ID.
+
+---
+
+## Middleware Security
+
+- The root `middleware.ts` enforces preview-token validation for `/draft` and `/preview` routes.  
+- Rejects unauthorised requests with HTTP 401.  
+- Handles locale cookie persistence (`__LOCALE_NAME`) and adds `X-Locale` response headers.  
+- Excludes system paths (e.g. `/api/`, `/auth/`, `/preview`) from locale handling.
 
 ---
 

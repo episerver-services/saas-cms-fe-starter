@@ -1,5 +1,7 @@
 # SaaS CMS Frontend Starter (Optimizely Head)
 
+_**Last updated: 31 October 2025**_
+
 This is the production-grade **Next.js 15** frontend, powered by the **Optimizely SaaS CMS GraphQL Delivery API (v2)**.
 
 It implements layout-aware rendering from CMS content, supports preview mode, and is structured for performance, testability, and developer handoff.
@@ -18,7 +20,9 @@ It implements layout-aware rendering from CMS content, supports preview mode, an
 • 🧪 BDD testing via Cucumber + Gherkin  
 • 🐳 Docker-ready production build and preview flows  
 • 🎨 Clear folder structure for CMS blocks, layouts, and routes  
-• 🚧 CMS component mapping and visual styles in progress
+• 🚧 CMS component mapping and visual styles in progress  
+• 🧱 Preview token validation middleware for secure draft access  
+• 🧩 Robots metadata generation to prevent indexing of preview routes  
 
 ---
 
@@ -45,6 +49,9 @@ NEXT_PUBLIC_CMS_URL=your-cms-instance-domain.cms.optimizely.com
 
 # Enable mocks for local preview without a live CMS
 NEXT_PUBLIC_MOCK_OPTIMIZELY=true
+
+# Optional
+# NEXT_PUBLIC_COOKIEBOT_ID=your_cookiebot_id_here
 ```
 
 ### 3. Run the Dev Server
@@ -130,6 +137,11 @@ Unit test coverage includes:
 - `app/components/draft/*` (Draft mode homepage, actions, CMS page, on-page-edit, EditModeProvider)  
 - `app/components/visual-builder/*` (wrapper for layout-aware rendering + VB communication injector)
 
+Middleware coverage includes:
+
+- `middleware.ts` (preview token validation, locale routing)  
+- `checkDraftMode()` and `generateMetadata()` behaviour (robots:noindex handling)
+
 Run **BDD tests** with Cucumber:
 
 ```bash
@@ -167,6 +179,8 @@ pnpm storybook
 📄 docker-compose.yml
 📄 tsconfig.json
 📄 README.md
+📄 middleware.ts
+📄 lib/utils/draft-mode.test.ts
 ```
 
 ---
@@ -205,6 +219,7 @@ docker run -p 3000:3000 --env-file .env.local saas-cms-fe-starter
 ✅ Edit mode context (`EditModeProvider`) integrated across draft routes  
 
 ---
+
 ## 🔮 What's Next
 
 Here are some suggested follow‑up tasks to evolve this starter into a fully production‑ready head:
@@ -217,3 +232,4 @@ Here are some suggested follow‑up tasks to evolve this starter into a fully pr
 - ⚙️ **CI/CD** – GitHub Actions or Vercel pipelines with lint/test/build checks.  
 - 🌍 **Multi‑locale Support** – Add i18n routing, content fallbacks, and language switcher.  
 - 🔐 **Auth & Personalisation** – Integrate Opti ID, feature flags, and AB testing.  
+- 🧩 **Preview Security & Middleware Tests** – Expand Jest coverage for token and robots logic.

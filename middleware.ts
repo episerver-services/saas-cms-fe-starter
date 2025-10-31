@@ -7,120 +7,53 @@ import Negotiator from 'negotiator'
 const COOKIE_NAME_LOCALE = '__LOCALE_NAME'
 const HEADER_KEY_LOCALE = 'X-Locale'
 
+// Name of preview token header (as sent from CMS)
+const HEADER_KEY_PREVIEW_TOKEN = 'x-preview-token'
+
+// Expected token secret or validator function (from env)
+const VALID_PREVIEW_TOKEN = process.env.OPTIMIZELY_PREVIEW_SECRET
+
 /**
  * Determines whether the request path should bypass locale handling.
- *
- * This excludes static assets, API routes, known system paths (like /draft),
- * and any path containing a file extension.
- *
- * @param path - The request pathname (e.g. `/about`, `/api/user`, `/styles.css`)
- * @returns True if the path should be excluded from locale middleware
  */
 function shouldExclude(path: string): boolean {
   return (
     path.startsWith('/static') ||
     path.includes('/api/') ||
-    path.includes('.') || // e.g. .css, .js, .png
-    path.startsWith('/draft') || // ✅ Prevent locale rewrite on draft preview routes
-    path.startsWith('/preview') || // ✅ Prevent locale rewrite on preview API routes
-    path.startsWith('/auth') // ✅ (Optional) Add other system routes you want to exclude
+    path.includes('.') ||
+    path.startsWith('/draft') ||
+    path.startsWith('/preview') ||
+    path.startsWith('/auth')
   )
 }
 
 /**
- * Parses the `Accept-Language` header to determine the user's preferred language.
+ * Preview token validation.
  *
- * Supports fallback to base language codes (e.g. `en-GB` → `en`).
- *
- * @param request - The incoming Next.js request
- * @param locales - Supported locale codes (e.g. ['en', 'fr'])
- * @returns The preferred locale if matched, otherwise undefined
+ * Ensures that requests to /draft or /preview routes include a valid token.
  */
-function getBrowserLanguage(
-  request: NextRequest,
-  locales: string[]
-): string | undefined {
-  const acceptLang = request.headers.get('Accept-Language')
-  if (!acceptLang) return undefined
+function validatePreviewToken(request: NextRequest): boolean {
+  const token =
+    request.nextUrl.searchParams.get('token') ||
+    request.headers.get(HEADER_KEY_PREVIEW_TOKEN)
 
-  const preferred = new Negotiator({
-    headers: { 'accept-language': acceptLang },
-  }).languages()
-
-  for (const lang of preferred) {
-    if (locales.includes(lang)) return lang
-    const base = lang.split('-')[0]
-    if (locales.includes(base)) return base
-  }
-
-  return undefined
+  if (!token || !VALID_PREVIEW_TOKEN) return false
+  return token === VALID_PREVIEW_TOKEN
 }
 
-/**
- * Resolves the user's locale preference from cookie, browser, or fallback.
- *
- * Order of precedence:
- * 1. Locale stored in cookie
- * 2. Browser's Accept-Language header
- * 3. Default locale
- *
- * @param request - The incoming Next.js request
- * @param locales - Supported locale codes
- * @returns A valid locale string
- */
-function getLocale(request: NextRequest, locales: string[]): string {
-  const cookieLocale = request.cookies.get(COOKIE_NAME_LOCALE)?.value
-  if (cookieLocale && locales.includes(cookieLocale)) return cookieLocale
-
-  const browserLang = getBrowserLanguage(request, locales)
-  if (browserLang && locales.includes(browserLang)) return browserLang
-
-  return DEFAULT_LOCALE
-}
-
-/**
- * Updates the user's locale preference via cookie and response header.
- *
- * If a new locale is provided and differs from the current cookie, it sets a new one.
- * If no locale is provided, it clears the existing cookie and header.
- *
- * @param request - The incoming request
- * @param response - The outgoing response
- * @param locale - The locale to persist (optional)
- */
-function updateLocaleCookies(
-  request: NextRequest,
-  response: NextResponse,
-  locale?: string
-): void {
-  const current = request.cookies.get(COOKIE_NAME_LOCALE)?.value
-
-  if (locale && locale !== current) {
-    response.cookies.set(COOKIE_NAME_LOCALE, locale)
-  } else if (!locale && current) {
-    response.cookies.delete(COOKIE_NAME_LOCALE)
-  }
-
-  if (locale) {
-    response.headers.set(HEADER_KEY_LOCALE, locale)
-  } else {
-    response.headers.delete(HEADER_KEY_LOCALE)
-  }
-}
-
-/**
- * Middleware that enables locale-aware routing, redirects, and cookie persistence.
- *
- * Behaviour:
- * - If the request path includes a valid locale, it rewrites and stores the locale in a cookie.
- * - If no locale is present, it detects the preferred one and redirects or rewrites accordingly.
- *
- * @param request - The incoming Next.js request
- * @returns A `NextResponse` with applied rewrite, redirect, or pass-through
- */
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname, searchParams } = request.nextUrl
 
+  // ✅ 1. Handle Preview Token Validation early
+  if (pathname.startsWith('/draft') || pathname.startsWith('/preview')) {
+    if (!validatePreviewToken(request)) {
+      return new NextResponse('Unauthorized preview access', { status: 401 })
+    }
+    // Allow request to continue if token is valid
+    return NextResponse.next()
+  }
+
+  // ✅ 2. Normal locale middleware behaviour
   if (shouldExclude(pathname)) {
     return NextResponse.next()
   }
@@ -155,14 +88,50 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   return response
 }
 
-/**
- * Middleware matcher configuration.
- *
- * Applies middleware to all routes **except**:
- * - API routes (`/api`)
- * - Next.js internals (`/_next/static`, `/_next/image`)
- * - Favicon files
- */
+/** Locale helpers (unchanged) **/
+function getBrowserLanguage(request: NextRequest, locales: string[]): string | undefined {
+  const acceptLang = request.headers.get('Accept-Language')
+  if (!acceptLang) return undefined
+
+  const preferred = new Negotiator({
+    headers: { 'accept-language': acceptLang },
+  }).languages()
+
+  for (const lang of preferred) {
+    if (locales.includes(lang)) return lang
+    const base = lang.split('-')[0]
+    if (locales.includes(base)) return base
+  }
+
+  return undefined
+}
+
+function getLocale(request: NextRequest, locales: string[]): string {
+  const cookieLocale = request.cookies.get(COOKIE_NAME_LOCALE)?.value
+  if (cookieLocale && locales.includes(cookieLocale)) return cookieLocale
+  const browserLang = getBrowserLanguage(request, locales)
+  if (browserLang && locales.includes(browserLang)) return browserLang
+  return DEFAULT_LOCALE
+}
+
+function updateLocaleCookies(
+  request: NextRequest,
+  response: NextResponse,
+  locale?: string
+): void {
+  const current = request.cookies.get(COOKIE_NAME_LOCALE)?.value
+  if (locale && locale !== current) {
+    response.cookies.set(COOKIE_NAME_LOCALE, locale)
+  } else if (!locale && current) {
+    response.cookies.delete(COOKIE_NAME_LOCALE)
+  }
+  if (locale) {
+    response.headers.set(HEADER_KEY_LOCALE, locale)
+  } else {
+    response.headers.delete(HEADER_KEY_LOCALE)
+  }
+}
+
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|favicon\\.(?:ico|png)).*)'],
 }

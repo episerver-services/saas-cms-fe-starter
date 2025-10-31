@@ -31,7 +31,7 @@ describe('checkDraftMode', () => {
     })
   }
 
-  it('returns true if draftMode is enabled', async () => {
+  it('returns true if draftMode is enabled in production', async () => {
     mockDraftMode.mockResolvedValue(makeDraftMode(true))
     setNodeEnv('production')
     await expect(checkDraftMode()).resolves.toBe(true)
@@ -46,7 +46,14 @@ describe('checkDraftMode', () => {
   it('returns true in development even if draftMode is disabled', async () => {
     mockDraftMode.mockResolvedValue(makeDraftMode(false))
     setNodeEnv('development')
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+
     await expect(checkDraftMode()).resolves.toBe(true)
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[checkDraftMode] Draft mode disabled; allowing in dev environment'
+    )
+
+    warnSpy.mockRestore()
   })
 
   it('returns true in development if draftMode is enabled', async () => {

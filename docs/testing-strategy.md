@@ -2,7 +2,7 @@
 
 This document outlines the testing strategy for this frontend project. It serves as a reference and can be expanded if the client requires a comprehensive coverage or documentation policy.
 
-_Last updated: 30 October 2025_
+_Last updated: 31 October 2025_
 
 ---
 
@@ -14,6 +14,7 @@ The codebase includes support for:
 - **BDD Tests** using Cucumber with Gherkin syntax  
 - **End-to-End (E2E) Tests** using Playwright  
 - **Visual Builder Context Tests** covering VB edit mode and communication injector behaviour  
+- **Middleware & Metadata Tests** validating preview token and SEO noindex logic
 
 All frameworks are pre-configured and ready to use.
 
@@ -23,8 +24,8 @@ All frameworks are pre-configured and ready to use.
 
 - **Location:** Co-located with implementation files, e.g. `*.test.ts` or `*.test.tsx` in `app/` and `lib/`.  
 - **Framework:** **Jest** + **React Testing Library**  
-- **Focus:** Component rendering, utilities, and data logic.  
-- **Includes:** Edit mode context, DOM mutation observer, and Visual Builder bridge tests.
+- **Focus:** Component rendering, utilities, middleware, and metadata generation logic.  
+- **Includes:** Edit mode context, DOM mutation observer, Visual Builder bridge tests, and draft mode validation helpers.
 
 ### Example Command
 
@@ -72,6 +73,7 @@ pnpm test:playwright
 | **BDD** | Cucumber | ✅ | Scenarios ready for CMS preview and routing behaviour |
 | **E2E** | Playwright | ✅ | Covers basic flows, draft mode entry, and layout validation |
 | **Visual Builder** | Jest | ✅ | Tested via `useIsInsideVB` and DOM observer hooks |
+| **Middleware & Metadata** | Jest | 🔄 | Partial coverage for preview token validation and `generateMetadata()` |
 
 ---
 
@@ -79,7 +81,8 @@ pnpm test:playwright
 
 The test frameworks are fully operational.  
 Unit test coverage includes **VB bridge hooks**, **draft mode**, and **core rendering utilities**.  
-BDD and E2E suites are baseline-complete and ready to expand.
+BDD and E2E suites are baseline-complete and ready to expand.  
+Middleware validation and `generateMetadata()` behaviour now partially covered by Jest.
 
 📌 Additional coverage can be scaled up as CMS integration resumes.
 
@@ -90,4 +93,4 @@ BDD and E2E suites are baseline-complete and ready to expand.
 - [Jest Docs](https://jestjs.io/)  
 - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)  
 - [Cucumber.js](https://github.com/cucumber/cucumber-js)  
-- [Playwright Docs](https://playwright.dev/)  
+- [Playwright Docs](https://playwright.dev/)

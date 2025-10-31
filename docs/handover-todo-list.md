@@ -2,7 +2,7 @@
 
 This document outlines the current state of the **SaaS CMS Frontend Starter** and recommended next steps for the next development team. It serves as a handover checklist and TODO list.
 
-_Last updated: **30 October 2025**_
+_Last updated: **31 October 2025**_
 
 ---
 
@@ -18,6 +18,10 @@ _Last updated: **30 October 2025**_
 - Environment and Docker setup complete for local and container builds
 - Accessibility, SEO, and metadata wired as stubs/placeholders
 - README, STATUS, and TESTING docs up to date
+- Middleware now validates preview tokens (`OPTIMIZELY_PREVIEW_SECRET`) for `/draft` and `/preview` routes  
+- Robots directives (`noindex`, `nofollow`, `nocache`) automatically applied to all draft/preview pages  
+- `checkDraftMode()` wrapper ensures dev fallback for local preview testing  
+- `IS_BUILD` flag prevents CMS calls during CI/CD build time
 
 ---
 
@@ -27,6 +31,7 @@ _Last updated: **30 October 2025**_
    - Re-enable GraphQL codegen and SDK against the client’s Optimizely schema.
    - Configure env vars for delivery & preview keys.
    - Replace stub queries with generated fragments.
+   - Verify middleware token validation in `/draft` and `/preview` routes works with new preview secret.
 
 2. **Core Components**
    - Implement CMS-driven rendering for:
@@ -67,6 +72,7 @@ _Last updated: **30 October 2025**_
 - Ensure correct ARIA attributes on accordions, nav, and forms.
 - Complete metadata pipeline with CMS-driven fields (title, desc, og:image).
 - Expand sitemap/robots from static to CMS-driven.
+- Confirm that draft routes continue to set `robots: noindex, nofollow, nocache`.
 
 ---
 
@@ -76,6 +82,8 @@ _Last updated: **30 October 2025**_
 - Expand **Playwright** scenarios for end-to-end preview & publish flows.
 - Add **BDD features** for core user journeys (homepage, form submission, navigation).
 - Consider contract tests against Optimizely GraphQL schema.
+- Add middleware-level tests for token validation and locale routing.
+- Add Jest tests verifying `generateMetadata()` noindex behaviour on draft routes.
 
 ---
 
@@ -84,6 +92,8 @@ _Last updated: **30 October 2025**_
 - Choose and integrate CMP (Cookiebot, Osano, etc.).
 - Add logging and error monitoring (Sentry, LogRocket).
 - Instrument RUM for Core Web Vitals.
+- Add preview access audit logging (401s, token validation failures).
+- Optional: Sentry integration for GraphQL error capture in preview mode.
 
 ---
 
